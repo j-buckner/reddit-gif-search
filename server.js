@@ -1,7 +1,9 @@
 const express = require('express');
 const app = express();
 var http = require('http');
-var request = require('request');
+var randomstring = require('randomstring');
+var needle = require('needle');
+var request = require('request')
 
 app.set('port', (process.env.PORT || 3001));
 
@@ -10,43 +12,54 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static('client/build'));
 }
 
-app.get('/api/search', (req, res) => {
+// Endpoint to auth client for reddit requests
+app.get('/api/auth', (req, res) => {
+  var deviceID = randomstring.generate({
+    length: 25
+  });
 
-  // return fetch(`https://www.reddit.com/r/cozyplaces.json`)
-  // .then(function(response){ res.json(response.json)});
+  var username = '5Ku4NNXMzh5atA';
+  var password = 'Rleug2TQuUhT4KS9Vfy2K2fpN5Q';
+  var auth = 'Basic ' + new Buffer(username + ':' + password).toString('base64');
 
-  request('https://www.reddit.com/r/cozyplaces.json', function (error, response, body) {
-    console.log('here', error, response, body);
-    if (!error && response.statusCode == 200) {
-      console.log(body);
-      res.json(response);
+  var options = {
+    headers: { 'Authorization': auth }
+  }
+
+  var data = {
+      grant_type: 'client_credentials',
+      device_id: deviceID
+  }
+
+  needle.post('https://www.reddit.com/api/v1/access_token', data, options, function(err, resp) {
+    if (!err && resp.statusCode == '200' && resp.body.access_token) {
+      res.json(resp.body.access_token)
     }
-  })
-  
-  // var options = {
-  //   host: 'http://www.reddit.com/',
-  //   path: '/api/v1/access_token'
-  // };
+  });
+});
 
-  // var req = http.get(options, function(res) {
-  //   console.log('STATUS: ' + res.statusCode);
-  //   console.log('HEADERS: ' + JSON.stringify(res.headers));
+// Endpoint to search
+app.get('/api/search', (req, res) => {
+  var clientToken = req.ct;
+  var queryText = req.q;
 
-  //   // Buffer the body entirely for processing as a whole.
-  //   var bodyChunks = [];
-  //   res.on('data', function(chunk) {
-  //     // You can process streamed parts here...
-  //     bodyChunks.push(chunk);
-  //   }).on('end', function() {
-  //     var body = Buffer.concat(bodyChunks);
-  //     console.log('BODY: ' + body);
-  //     // ...and/or process the entire body here.
-  //   })
-  // });
+  var options = {
+    url: 'https://www.reddit.com/subreddits/popular.json',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  };
 
-  // req.on('error', function(e) {
-  //   console.log('ERROR: ' + e.message);
-  // });
+  request(options, function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+      var bodyJSON = JSON.parse(body);
+      var data = bodyJSON.data.children;
+      var subDispalyNames = data.map(function(sub) { return sub.data.display_name; });
+      
+      res.json(subDispalyNames);
+    }
+  });
+
 });
 
 app.listen(app.get('port'), () => {

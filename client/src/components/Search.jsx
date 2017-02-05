@@ -14,7 +14,8 @@ class Search extends Component {
 
   search() {
     let text = this.state.searchText;
-    return fetch(`api/search?q=${text}`, {
+    let client_token = window.client_token;
+    return fetch(`api/search?ct=${client_token}&q=${text}`, {
       accept: 'application/json',
     }).then(this.checkStatus)
       .then(this.parseJSON)
@@ -34,7 +35,6 @@ class Search extends Component {
   }
 
   parseJSON(response) {
-    console.log(response);
     return response.json();
   }
 
