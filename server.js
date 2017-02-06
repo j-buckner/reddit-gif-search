@@ -3,7 +3,8 @@ const app = express();
 var http = require('http');
 var randomstring = require('randomstring');
 var needle = require('needle');
-var request = require('request')
+var request = require('request');
+var parse = require('parse/node');
 
 app.set('port', (process.env.PORT || 3001));
 
@@ -43,20 +44,64 @@ app.get('/api/search', (req, res) => {
   var clientToken = req.ct;
   var queryText = req.q;
 
-  var options = {
-    url: 'https://www.reddit.com/subreddits/popular.json',
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  };
-
-  request(options, function (error, response, body) {
+  request('https://www.reddit.com/subreddits/popular.json?limit=100', function (error, response, body) {
     if (!error && response.statusCode == 200) {
       var bodyJSON = JSON.parse(body);
       var data = bodyJSON.data.children;
-      var subDispalyNames = data.map(function(sub) { return sub.data.display_name; });
+      var subURLs = data.map(function(sub) { return sub.data.url; });
+
+      let subURL = subURLs[3];
+      var testURL = `https://www.reddit.com${subURL}top.json`;
+
+      request(testURL, function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+          var bodyJSON = JSON.parse(body);
+          var data = bodyJSON.data.children;
+          var linkIDs = data.map(function(link) { return link.data.id; });
+
+
+          var testCommentsURL = `https://www.reddit.com${subURL}comments/${linkIDs[0]}.json`;
+          
+          request(testCommentsURL, function(error, response, body) {
+            
+            var data = JSON.parse(body);
+            // console.log('base data is ', data);
+            var comments = data.map(function(comment) { 
+              return comment.data.children;
+            });
+
+            var commentsChildren =  comments.map(function(commentChildren) {
+                // Only get link comments
+                var commentURLs = commentChildren.map(function(childrenData) {
+                  if (childrenData.kind === 't3' && childrenData.data.domain === 'i.imgur.com') {
+                    return childrenData.data.url;
+                  } else {
+                    return '';
+                  }
+                });
+
+                return commentURLs;
+                // if (commentChildren.data.domain === 'i.imgur.com') {
+                //   return commentChildren.data.url;  
+                // } else {
+                //   return '';
+                // }
+            });
+
+            var mergedChildren = [].concat.apply([], commentsChildren);
+
+            var mergedChildrenFiltered = mergedChildren.filter(function(url) {
+              return url !== '';
+            });
+
+            // res.json(data);
+            res.json(mergedChildrenFiltered);
+
+          });
+        }
+      });
       
-      res.json(subDispalyNames);
+      
     }
   });
 
