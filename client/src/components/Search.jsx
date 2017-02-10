@@ -14,10 +14,6 @@ class Search extends Component {
     this.search = this.search.bind(this);
   }
 
-  handleSearchResponse(response) {
-    console.log('link is: ', response);
-  }
-
   search() {
     let text = this.state.searchText;
     // let client_token = window.client_token;
@@ -30,7 +26,7 @@ class Search extends Component {
   }
 
   componentDidMount() {
-    socket.on('search-response', this.handleSearchResponse);
+    socket.on('search-response', this.props.handleSearchResponse);
   }
 
   render() {

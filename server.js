@@ -54,7 +54,7 @@ io.on('connection', function(socket){
       if (!error && response.statusCode == 200) {
         var bodyJSON = JSON.parse(body);
         var data = bodyJSON.data.children;
-        var subData = data.map(function(sub) { console.log(sub.data); return {url: sub.data.url, name: sub.data.display_name} });
+        var subData = data.map(function(sub) { return {url: sub.data.url, name: sub.data.display_name} });
         subData.forEach(function(subDataElement) {
           let subURL = subDataElement.url;
           let subName = subDataElement.name;
