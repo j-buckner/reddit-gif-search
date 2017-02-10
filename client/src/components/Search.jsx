@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import '../App.css';
+const io = require('socket.io-client');
+const socket = io.connect('/');
 
 class Search extends Component {
   constructor(props) {
@@ -12,38 +14,23 @@ class Search extends Component {
     this.search = this.search.bind(this);
   }
 
+  handleSearchResponse(response) {
+    console.log('link is: ', response);
+  }
+
   search() {
     let text = this.state.searchText;
-    let client_token = window.client_token;
-    return fetch(`api/search?ct=${client_token}&q=${text}`, {
-      accept: 'application/json',
-    }).then(this.checkStatus)
-      .then(this.parseJSON)
-      .then(this.cb);
-  }
+    // let client_token = window.client_token;
 
-  checkStatus(response) {
-    if (response.status >= 200 && response.status < 300) {
-      return response;
-    } else {
-      const error = new Error(`HTTP Error ${response.statusText}`);
-      error.status = response.statusText;
-      error.response = response;
-      console.log(error); // eslint-disable-line no-console
-      throw error;
-    }
-  }
-
-  parseJSON(response) {
-    return response.json();
-  }
-
-  cb(response) {
-    console.log(response);
+    socket.emit('search', text);
   }
 
   searchTextChanged(e) {
     this.setState({searchText: e.target.value});
+  }
+
+  componentDidMount() {
+    socket.on('search-response', this.handleSearchResponse);
   }
 
   render() {
