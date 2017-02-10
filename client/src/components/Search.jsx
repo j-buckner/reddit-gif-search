@@ -31,20 +31,18 @@ class Search extends Component {
 
   render() {
     return (
-      <div className="App">
-        <div className="flex three search">
-          <div><span></span></div>
-          <div>
-            <h3>Search Reddit for Gifs</h3>
-          </div>
-          <div><span></span></div>
-          <div><span></span></div>
-          <div>
-            <input onChange={this.searchTextChanged} placeholder="Search for gifs" />
-          </div>
-          <div>
-            <input id="submitSearch" value="Search" onClick={this.search} type="submit" />
-          </div>
+      <div className="flex three search">
+        <div><span></span></div>
+        <div>
+          <h3>Search Reddit for Gifs</h3>
+        </div>
+        <div><span></span></div>
+        <div><span></span></div>
+        <div>
+          <input onChange={this.searchTextChanged} placeholder="Search for gifs" />
+        </div>
+        <div>
+          <input id="submitSearch" value="Search" onClick={this.search} type="submit" />
         </div>
       </div>
     );

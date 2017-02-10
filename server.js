@@ -47,6 +47,7 @@ var options = {
   }
 };
 
+var count = 0;
 io.on('connection', function(socket){
   socket.on('search', function(searchText){
     options['url'] = 'https://www.reddit.com/subreddits/popular.json?limit=100';
@@ -100,14 +101,25 @@ io.on('connection', function(socket){
                   var mergedChildren = [].concat.apply([], commentsChildren);
 
                   var mergedChildrenFiltered = mergedChildren.filter(function(url) {
-                    return (url !== '') && !url.includes('reddit.com/r');
+                    return (url !== '') && !url.includes('reddit.com/r') && (url.includes('gif') || url.includes('gifv'));
                   });
 
                   mergedChildrenFiltered.forEach(function(imgurLink, index, array) {
 
+
+                    count++;
+                    if (count > 25) {
+                      return;
+                    }
+
+                    if (imgurLink.charAt(imgurLink.length - 1) == ')') {
+                      imgurLink = imgurLink.slice(0, -1);
+                    }
+
+
                     let data = {
-                      'link': imgurLink,
-                      'sub': subName
+                      link: imgurLink,
+                      sub: subName
                     }
 
                     // Send back link

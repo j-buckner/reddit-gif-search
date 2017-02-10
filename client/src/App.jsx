@@ -11,32 +11,69 @@ class App extends Component {
     }
 
     this.handleSearchResponse = this.handleSearchResponse.bind(this);
+    this.onImgLoadFailed = this.onImgLoadFailed.bind(this);
   }
+
   handleSearchResponse(link) {
     let currLinks = this.state.links;
     currLinks.push(link);
 
     this.setState({links: currLinks});
   }
+
+  onImgLoadFailed(event) {
+    console.log(event.target.src);
+    let failedURL = event.target.src;
+
+    let linksUpdated = this.state.links.filter(function(link){
+      return (link.link !== failedURL);
+    });
+
+    this.setState({links: linksUpdated});
+  }
+
+  onImgLoad(event) {
+    let imgWidth = event.target.width;
+    let imgHeight = event.target.height;
+
+    let aspectRatio = imgWidth / imgHeight;
+
+    let targetHeight = 550;
+    let targetWidth = targetHeight * aspectRatio;
+
+    event.target.width = targetWidth;
+    event.target.height = targetHeight;
+    // console.log('aspect ratio: ', imgWidth, imgHeight, aspectRatio);
+  }
+
   render() {
     var linkRows = [];
     this.state.links.forEach(function(link, index) {
       linkRows.push(
-        <article className="card div">
-          <header>
-            <a href={link.link}key={index}>{link.link}</a>
-          </header>
-        </article>
+        <div key={link.link + '-' + index}>
+          <article className="card div">
+            <header>
+              <img onLoad={this.onImgLoad} onError={this.onImgLoadFailed} src={link.link} alt=":("/>
+            </header>
+          </article>
+        </div>
       );
-    });
+    }.bind(this));
 
     return (
       <div className="App">
-        <Search handleSearchResponse={this.handleSearchResponse}/>
-        {linkRows}
+        <div className="SearchDiv">
+          <Search handleSearchResponse={this.handleSearchResponse}/>
+        </div>
+        <div className="flex one">
+          {linkRows}
+        </div>
       </div>
     );
   }
 }
 
 export default App;
+
+
+// <a href={link.link}>{link.link}</a>
