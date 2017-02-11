@@ -1,6 +1,7 @@
 {
   "name": "reddit-gif-search-client",
   "version": "0.1.0",
+  "homepage": "https://gentle-basin-82557.herokuapp.com/",
   "private": true,
   "proxy": "http://localhost:3001/",
   "devDependencies": {
