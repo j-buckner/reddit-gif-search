@@ -2,104 +2,126 @@
 var request = require('request');
 var getURLs = require('get-urls');
 
-// console.log('test');
+const MongoClient = require('mongodb').MongoClient;
 
-// const MongoClient = require('mongodb').MongoClient
+MongoClient.connect('mongodb://heroku_p4kv17tq:s268pk2ssbk5hd3v3m5175nkfg@ds149069.mlab.com:49069/heroku_p4kv17tq', (err, db) => {
+  if (err) return console.log(err)
+  getData(db);
+})
 
-// MongoClient.connect('link-to-mongodb', (err, database) => {
-//   // ... start the server
-// })
+function getData(db) {
+  var count = 0;
 
-var options = {
-  url: '',
-  headers: {
-    'User-Agent': 'web:5Ku4NNXMzh5atA:v0.0.1 (by /u/jare_)'
-  }
-};
+  var options = {
+    url: '',
+    headers: {
+      'User-Agent': 'web:5Ku4NNXMzh5atA:v0.0.1 (by /u/jare_)'
+    }
+  };
 
-var count = 0;
-options['url'] = 'https://www.reddit.com/subreddits/popular.json?limit=100';
-request(options, function (error, response, body) {
-  if (!error && response.statusCode == 200) {
-    var bodyJSON = JSON.parse(body);
-    var data = bodyJSON.data.children;
-    var subData = data.map(function(sub) { return {url: sub.data.url, name: sub.data.display_name} });
-    subData.forEach(function(subDataElement) {
-      let subURL = subDataElement.url;
-      let subName = subDataElement.name;
+  options['url'] = 'https://www.reddit.com/subreddits/popular.json?limit=100';
+  request(options, function (error, response, body) {
+    if (error) return console.log('Error getting subs: ', error);
+    if (response.statusCode == 200) {
+      var bodyJSON = JSON.parse(body);
+      var data = bodyJSON.data.children;
+      var subData = data.map(function(sub) { return {url: sub.data.url, name: sub.data.display_name} });
+      subData.forEach(function(subDataElement) {
+        let subURL = subDataElement.url;
+        let subName = subDataElement.name;
 
-      let subURLFormatted = `https://www.reddit.com${subURL}top.json`;
-      options['url'] = subURLFormatted;
-      request(options, function(error, response, body) {
-        if (!error && response.statusCode == 200) {
-          var bodyJSON = JSON.parse(body);
-          var data = bodyJSON.data.children;
-          var linkIDs = data.map(function(link) { return link.data.id; });
+        let subURLFormatted = `https://reddit.com${subURL}top.json`;
+        
+        options['url'] = subURLFormatted;
+        request(options, function(error, response, body) {
+          if (error) return console.log('Error getting articles in sub: ', error);
+          if (response.statusCode == 200) {
+            var bodyJSON = JSON.parse(body);
+            var data = bodyJSON.data.children;
+            var articleIDs = data.map(function(article) { return article.data.id; });
 
-          linkIDs.forEach(function(link, index, linkArr) {
-            var linkURL = `https://www.reddit.com${subURL}comments/${link}.json`;
-            options['url'] = linkURL;
-            request(linkURL, function(error, response, body) {
-
-              try {
-                var data = JSON.parse(body);
-              } catch (e) {
-                return;
-              }
-
-              var comments = data.map(function(comment) { 
-                return comment.data.children;
-              });
-
-              var commentsChildren =  comments.map(function(commentChildren) {
-                  var commentURLs = commentChildren.map(function(childrenData) {
-
-                    if (!childrenData.data.body) return '';
-
-                    var finalURL = '';
-                    var urls = getURLs(childrenData.data.body);
-                    for (let url of urls) finalURL = url;
-                    return finalURL;
-                    
-                  });
-
-                  return commentURLs;
-              });
-
-              var mergedChildren = [].concat.apply([], commentsChildren);
-
-              var mergedChildrenFiltered = mergedChildren.filter(function(url) {
-                return (url !== '') && !url.includes('reddit.com/r') && (url.includes('gif') || url.includes('gifv'));
-              });
-
-              mergedChildrenFiltered.forEach(function(imgurLink, index, array) {
-
-
-                count++;
-                if (count > 25) {
+            articleIDs.forEach(function(link, index, linkArr) {
+              var articleCommentsURL = `https://reddit.com${subURL}comments/${link}.json`;
+              
+              options['url'] = articleCommentsURL;
+              request(articleCommentsURL, function(error, response, body) {
+                
+                try {
+                  var data = JSON.parse(body);
+                } catch (e) {
+                  console.log('Error getting comments in article: ', articleCommentsURL);
                   return;
                 }
 
-                if (imgurLink.charAt(imgurLink.length - 1) == ')') {
-                  imgurLink = imgurLink.slice(0, -1);
+                var comments = data.map(function(comment) { 
+                  return comment.data.children;
+                });
+
+                var commentLinkData =  comments.map(function(comment) {
+                    var commentLinkData = comment.map(function(commentData) {
+                      if (!commentData.data.body) return [];
+                      var urls = getURLs(commentData.data.body);
+
+                      if (!urls) return [];
+
+                      var linkData = [];
+                      for (let url of urls) {
+                        if (url.includes('reddit.com/r') || (!url.includes('.gif') && !url.includes('.gifv')) ) continue;
+                        if (url.charAt(url.length - 1) == ')') {
+                          url = url.slice(0, -1);
+                        }
+
+                        let linkDataElement = {
+                          c_id: commentData.data.id,
+                          url: url,
+                          sub: commentData.data.subreddit
+                        }
+
+                        linkData.push(linkDataElement);
+                      }
+
+                      return linkData;
+                      
+                    });
+
+                    return commentLinkData;
+                });
+
+                var commentLinkData = [].concat.apply([], commentLinkData);
+                var commentLinkData = commentLinkData.filter(function(data) {
+                  return (data.length > 0);
+                });
+
+                var linkData = [];
+                for (let data of commentLinkData) {                  
+                  if (data.length === 1) linkData.push(data[0]);
+                  data.forEach(function(dataElement) {
+                    linkData.push(dataElement);
+                  });
                 }
 
+                if (linkData.length === 0) return;
+                linkData.forEach(function(linkObject) {
+                  
+                  count++;
+                  if (count > 25) {
+                    return;
+                  }
 
-                let data = {
-                  link: imgurLink,
-                  sub: subName
-                }
+                  // Send back link
+                  // socket.emit('search-response', data);
+                  db.collection('links').insertOne({
+                    "c_id" : linkObject.c_id,
+                    "url" : linkObject.url,
+                    "sub" : linkObject.sub
+                  });
 
-                // Send back link
-                console.log(data);
-                // socket.emit('search-response', data);
-
+                });
               });
             });
-          });
-        }
+          }
+        });
       });
-    });
-  }
-});
-  
+    }
+  });
+}
