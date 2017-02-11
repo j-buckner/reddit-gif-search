@@ -22,7 +22,6 @@ class App extends Component {
   }
 
   onImgLoadFailed(event) {
-    console.log(event.target.src);
     let failedURL = event.target.src;
 
     let linksUpdated = this.state.links.filter(function(link){
@@ -43,7 +42,6 @@ class App extends Component {
 
     event.target.width = targetWidth;
     event.target.height = targetHeight;
-    // console.log('aspect ratio: ', imgWidth, imgHeight, aspectRatio);
   }
 
   render() {
@@ -74,6 +72,3 @@ class App extends Component {
 }
 
 export default App;
-
-
-// <a href={link.link}>{link.link}</a>
