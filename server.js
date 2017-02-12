@@ -52,7 +52,7 @@ MongoClient.connect('mongodb://heroku_p4kv17tq:s268pk2ssbk5hd3v3m5175nkfg@ds1490
 var io = require('socket.io').listen(server);
 io.on('connection', function(socket){
   socket.on('search', function(searchText){
-    db.collection('links').find().toArray(function(err, results) {
+    db.collection('links').find().limit( 30 ).toArray(function(err, results) {
       socket.emit('search-response', results);
     });
   });

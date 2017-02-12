@@ -30,7 +30,7 @@ class App extends Component {
   }
 
   onImgLoadFailed(event) {
-    let failedURL = event.target.src;
+    let failedURL = event.target.src.replace(/webm/i, 'gifv');
     let linksUpdated = this.state.links.filter(function(link){
       return (link.url !== failedURL);
     });
@@ -39,10 +39,15 @@ class App extends Component {
   }
 
   onImgLoad(event) {
+    event.target.style.display = '';
+    
     const { links } = this.state;
 
     let imgWidth = event.target.width;
     let imgHeight = event.target.height;
+
+    if (imgWidth === 0) imgWidth = 350;
+    if (imgHeight === 0) imgHeight = 350;
 
     let aspectRatio = imgWidth / imgHeight;
 
@@ -57,7 +62,8 @@ class App extends Component {
     let newLinks = Object.assign([], links);
     newLinks.some(function(currLink, index) {
       if (currLink.c_id === c_id) {
-        newLinks[index]["width"] = targetWidth;
+        newLinks[index]["width"] = event.target.width;
+        newLinks[index]["height"] = event.target.height;
 
         this.setState({links: newLinks});
         return true;
@@ -81,7 +87,19 @@ class App extends Component {
         linkWidth = link.width + 10;
       }
 
-      layout.push({i: link.c_id, x: currX, y: 0, w: linkWidth, h:9 , static: false});
+      let linkHeight = 400;
+      if (!link.height) {
+        linkHeight = 400;
+      } else {
+        linkHeight = link.height + 10;
+      }
+
+      // linkHeight = Math.round(linkHeight/30);
+
+      // Hard code for now
+      linkHeight = 9;
+
+      layout.push({i: link.c_id, x: currX, y: 0, w: linkWidth, h:linkHeight, static: false});
       
       if (currX + linkWidth > window.innerWidth) {
         currX = 0;
@@ -97,15 +115,35 @@ class App extends Component {
     var linkRows = [];
     var layout = this.generateLayout();
     const imgStyle = {
-      'pointer-events': 'none'
+      'pointerEvents': 'none',
+      'display': 'none'
     };
 
+    // <div className="link-div" key={link.c_id} data-cid={link.c_id}>
+    //   <img onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
+    //   <div>
+    //     <a href={link.url}>Link</a>
+    //   </div>
+    // </div>
+
     this.state.links.forEach(function(link, index) {
-      linkRows.push(
-        <div key={link.c_id} data-cid={link.c_id}>
-          <img onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
-        </div>
-      );
+      let type = link.url.includes('gifv') ? 'gifv' : 'gif';
+      if (type === 'gifv'){
+        let newURL = link.url.replace(/gifv/i, 'webm');
+        linkRows.push(
+          <div className="link-div" key={link.c_id} data-cid={link.c_id}>
+            <video onLoadStart={this.onImgLoad} style={imgStyle} preload="none" autoPlay="autoplay" loop="loop" >
+                <source src={newURL} type="video/webm" onError={this.onImgLoadFailed}></source>
+            </video> 
+          </div>
+        );
+      } else {
+        linkRows.push(
+          <div className="link-div" key={link.c_id} data-cid={link.c_id}>
+            <img onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
+          </div>
+        );
+      }
     }.bind(this));
 
     return (
@@ -113,10 +151,14 @@ class App extends Component {
         <div className="SearchDiv">
           <Search handleSearchResponse={this.handleSearchResponse}/>
         </div>
-        <ReactGridLayout className="layout" layout={layout} cols={window.innerWidth} rowHeight={30} width={window.innerWidth}>        
+        <ReactGridLayout className="layout" 
+          layout={layout} 
+          cols={window.innerWidth} 
+          rowHeight={30} 
+          width={window.innerWidth} 
+          isResizable={false}>        
           {linkRows}
         </ReactGridLayout>
-        
       </div>
     );
   }
