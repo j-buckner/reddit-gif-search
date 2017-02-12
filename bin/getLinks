@@ -30,7 +30,7 @@ function getData(db) {
         let subURL = subDataElement.url;
         let subName = subDataElement.name;
 
-        let subURLFormatted = `https://reddit.com${subURL}top.json`;
+        let subURLFormatted = `https://reddit.com${subURL}top.json?limit=100`;
         
         options['url'] = subURLFormatted;
         request(options, function(error, response, body) {
@@ -41,7 +41,7 @@ function getData(db) {
             var articleIDs = data.map(function(article) { return article.data.id; });
 
             articleIDs.forEach(function(link, index, linkArr) {
-              var articleCommentsURL = `https://reddit.com${subURL}comments/${link}.json`;
+              var articleCommentsURL = `https://reddit.com${subURL}comments/${link}.json?limit=100`;
               
               options['url'] = articleCommentsURL;
               request(articleCommentsURL, function(error, response, body) {

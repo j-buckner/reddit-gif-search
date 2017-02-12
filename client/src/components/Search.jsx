@@ -16,8 +16,6 @@ class Search extends Component {
 
   search() {
     let text = this.state.searchText;
-    // let client_token = window.client_token;
-
     socket.emit('search', text);
   }
 
@@ -27,6 +25,9 @@ class Search extends Component {
 
   componentDidMount() {
     socket.on('search-response', this.props.handleSearchResponse);
+
+    // initialize data
+    this.search();
   }
 
   render() {
