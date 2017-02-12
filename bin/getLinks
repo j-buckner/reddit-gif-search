@@ -104,20 +104,16 @@ function getData(db) {
                 linkData.forEach(function(linkObject) {
                   
                   count++;
-                  if (count > 25) {
+                  if (count > 50) {
                     return;
                   }
 
-                  // Send back link
-                  // socket.emit('search-response', data);
-                  db.collection('links').insertOne({
-                    "c_id" : linkObject.c_id,
-                    "url" : linkObject.url,
-                    "sub" : linkObject.sub
-                  });
+                  db.collection('links').update({"c_id": linkObject.c_id},{$set: {"url" : linkObject.url,"sub" : linkObject.sub}},{upsert:true});
 
                 });
+
               });
+
             });
           }
         });

@@ -1,10 +1,9 @@
 const express = require('express');
 const app = express();
+const MongoClient = require('mongodb').MongoClient;
 var server = require('http').Server(app);  
 var randomstring = require('randomstring');
 var needle = require('needle');
-var request = require('request');
-var getURLs = require('get-urls');
 
 app.set('port', (process.env.PORT || 3001));
 
@@ -39,103 +38,22 @@ app.get('/api/auth', (req, res) => {
   });
 });
 
-var io = require('socket.io').listen(server);
-var options = {
-  url: '',
-  headers: {
-    'User-Agent': 'web:5Ku4NNXMzh5atA:v0.0.1 (by /u/jare_)'
-  }
-};
+var db;
+MongoClient.connect('mongodb://heroku_p4kv17tq:s268pk2ssbk5hd3v3m5175nkfg@ds149069.mlab.com:49069/heroku_p4kv17tq', (err, database) => {
+  if (err) return console.log(err);
 
-var count = 0;
-io.on('connection', function(socket){
-  socket.on('search', function(searchText){
-    options['url'] = 'https://www.reddit.com/subreddits/popular.json?limit=100';
-    request(options, function (error, response, body) {
-      if (!error && response.statusCode == 200) {
-        var bodyJSON = JSON.parse(body);
-        var data = bodyJSON.data.children;
-        var subData = data.map(function(sub) { return {url: sub.data.url, name: sub.data.display_name} });
-        subData.forEach(function(subDataElement) {
-          let subURL = subDataElement.url;
-          let subName = subDataElement.name;
-
-          let subURLFormatted = `https://www.reddit.com${subURL}top.json`;
-          options['url'] = subURLFormatted;
-          request(options, function(error, response, body) {
-            if (!error && response.statusCode == 200) {
-              var bodyJSON = JSON.parse(body);
-              var data = bodyJSON.data.children;
-              var linkIDs = data.map(function(link) { return link.data.id; });
-
-              linkIDs.forEach(function(link, index, linkArr) {
-                var linkURL = `https://www.reddit.com${subURL}comments/${link}.json`;
-                options['url'] = linkURL;
-                request(linkURL, function(error, response, body) {
-
-                  try {
-                    var data = JSON.parse(body);
-                  } catch (e) {
-                    return;
-                  }
-
-                  var comments = data.map(function(comment) { 
-                    return comment.data.children;
-                  });
-
-                  var commentsChildren =  comments.map(function(commentChildren) {
-                      var commentURLs = commentChildren.map(function(childrenData) {
-
-                        if (!childrenData.data.body) return '';
-
-                        var finalURL = '';
-                        var urls = getURLs(childrenData.data.body);
-                        for (let url of urls) finalURL = url;
-                        return finalURL;
-                        
-                      });
-
-                      return commentURLs;
-                  });
-
-                  var mergedChildren = [].concat.apply([], commentsChildren);
-
-                  var mergedChildrenFiltered = mergedChildren.filter(function(url) {
-                    return (url !== '') && !url.includes('reddit.com/r') && (url.includes('gif') || url.includes('gifv'));
-                  });
-
-                  mergedChildrenFiltered.forEach(function(imgurLink, index, array) {
-
-
-                    count++;
-                    if (count > 25) {
-                      return;
-                    }
-
-                    if (imgurLink.charAt(imgurLink.length - 1) == ')') {
-                      imgurLink = imgurLink.slice(0, -1);
-                    }
-
-
-                    let data = {
-                      link: imgurLink,
-                      sub: subName
-                    }
-
-                    // Send back link
-                    socket.emit('search-response', data);
-
-                  });
-                });
-              });
-            }
-          });
-        });
-      }
-    });
+  db = database;
+  server.listen(app.get('port'), () => {
+    console.log(`Find the server at: http://localhost:${app.get('port')}/`); // eslint-disable-line no-console
   });
+
 });
 
-server.listen(app.get('port'), () => {
-  console.log(`Find the server at: http://localhost:${app.get('port')}/`); // eslint-disable-line no-console
+var io = require('socket.io').listen(server);
+io.on('connection', function(socket){
+  socket.on('search', function(searchText){
+    db.collection('links').find().toArray(function(err, results) {
+      socket.emit('search-response', results);
+    });
+  });
 });

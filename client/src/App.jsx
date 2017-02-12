@@ -14,18 +14,17 @@ class App extends Component {
     this.onImgLoadFailed = this.onImgLoadFailed.bind(this);
   }
 
-  handleSearchResponse(link) {
+  handleSearchResponse(links) {
     let currLinks = this.state.links;
-    currLinks.push(link);
+    let newLinks = currLinks.concat(links);
 
-    this.setState({links: currLinks});
+    this.setState({links: newLinks});
   }
 
   onImgLoadFailed(event) {
     let failedURL = event.target.src;
-
     let linksUpdated = this.state.links.filter(function(link){
-      return (link.link !== failedURL);
+      return (link.url !== failedURL);
     });
 
     this.setState({links: linksUpdated});
@@ -48,10 +47,10 @@ class App extends Component {
     var linkRows = [];
     this.state.links.forEach(function(link, index) {
       linkRows.push(
-        <div key={link.link + '-' + index}>
+        <div key={link.url + '-' + index}>
           <article className="card div">
             <header>
-              <img onLoad={this.onImgLoad} onError={this.onImgLoadFailed} src={link.link} alt=":("/>
+              <img onLoad={this.onImgLoad} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
             </header>
           </article>
         </div>
