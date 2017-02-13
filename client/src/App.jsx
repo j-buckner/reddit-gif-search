@@ -11,6 +11,7 @@ class App extends Component {
     super(props);
 
     this.state = {
+      c_ids: [],
       links: [],
       currRowX: 0,
       layout: [],
@@ -23,10 +24,37 @@ class App extends Component {
   }
 
   handleSearchResponse(links) {
-    let currLinks = this.state.links;
-    let newLinks = currLinks.concat(links);
 
-    this.setState({links: newLinks});
+    let currCIDs = this.state.c_ids;
+    let currLinks = this.state.links;
+    // let bindData = {currCIDs,}
+    links.forEach(function(link) {
+      if(!currCIDs.includes(link.c_id)) { 
+        currCIDs.push(link.c_id);
+        currLinks.push(link);
+      }
+    });
+    
+    // var values = [
+    //     { name: 'someName1' },
+    //     { name: 'someName2' },
+    //     { name: 'someName4' },
+    //     { name: 'someName2' }
+    // ];
+    // const uniquifyLinks = links.filter((val,id,array) => array.indexOf(val) === id);
+    // let uniquifyLinks = [...new Set(links)]; 
+
+    // var linkCIDs = links.map(function(link){ return link.c_id });
+    // var isDuplicate = linkCIDs.some(function(item, idx){ 
+    //     return linkCIDs.indexOf(item) != idx 
+    // });
+    // console.log(uniquifyLinks);
+
+
+    // let currLinks = this.state.uniquifyLinks;
+    // let newLinks = currLinks.concat(uniquifyLinks);
+    console.log(currLinks, currCIDs);
+    this.setState({links: currLinks, c_ids: currCIDs});
   }
 
   onImgLoadFailed(event) {
@@ -142,6 +170,7 @@ class App extends Component {
       let type = link.url.includes('gifv') ? 'gifv' : 'gif';
       if (type === 'gifv'){
         let newURL = link.url.replace(/gifv/i, 'webm');
+        // console.log("Using cid ", link.c_id);
         linkRows.push(
           <div className="link-div" key={link.c_id} data-cid={link.c_id}>
             <video onLoadedMetadata={this.onImgLoad} style={imgStyle} preload="none" autoPlay="autoplay" loop="loop" >

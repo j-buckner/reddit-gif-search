@@ -27,7 +27,7 @@ class Search extends Component {
     socket.on('search-response', this.props.handleSearchResponse);
 
     // initialize data
-    this.search();
+    // this.search();
   }
 
   render() {
