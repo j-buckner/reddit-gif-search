@@ -42,9 +42,16 @@ class App extends Component {
     event.target.style.display = '';
     
     const { links } = this.state;
-
-    let imgWidth = event.target.width;
-    let imgHeight = event.target.height;
+    
+    let imgWidth = 0;
+    let imgHeight = 0;
+    if (event.target.videoWidth && event.target.videoHeight) {
+      imgWidth = event.target.videoWidth;
+      imgHeight = event.target.videoHeight;
+    } else {
+      imgWidth = event.target.width;
+      imgHeight = event.target.height;
+    }
 
     if (imgWidth === 0) imgWidth = 350;
     if (imgHeight === 0) imgHeight = 350;
@@ -54,16 +61,21 @@ class App extends Component {
     let targetHeight = 350;
     let targetWidth = targetHeight * aspectRatio;
 
-    event.target.width = targetWidth;
-    event.target.height = targetHeight;
+    if (event.target.videoWidth && event.target.videoHeight) {
+      event.target.setAttribute('width', targetWidth);
+      event.target.setAttribute('height', targetHeight);
+    } else {
+      event.target.width = targetWidth;
+      event.target.height = targetHeight;
+    }
 
     let c_id = event.target.parentElement.getAttribute('data-cid');
 
     let newLinks = Object.assign([], links);
     newLinks.some(function(currLink, index) {
       if (currLink.c_id === c_id) {
-        newLinks[index]["width"] = event.target.width;
-        newLinks[index]["height"] = event.target.height;
+        newLinks[index]["width"] = targetWidth;
+        newLinks[index]["height"] = targetHeight;
 
         this.setState({links: newLinks});
         return true;
@@ -132,7 +144,7 @@ class App extends Component {
         let newURL = link.url.replace(/gifv/i, 'webm');
         linkRows.push(
           <div className="link-div" key={link.c_id} data-cid={link.c_id}>
-            <video onLoadStart={this.onImgLoad} style={imgStyle} preload="none" autoPlay="autoplay" loop="loop" >
+            <video onLoadedMetadata={this.onImgLoad} style={imgStyle} preload="none" autoPlay="autoplay" loop="loop" >
                 <source src={newURL} type="video/webm" onError={this.onImgLoadFailed}></source>
             </video> 
           </div>
