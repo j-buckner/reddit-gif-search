@@ -1,33 +1,23 @@
 import React, { Component } from 'react';
 import '../App.css';
-const io = require('socket.io-client');
-const socket = io.connect('/');
 
 class Search extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      searchText: ''
+      searchText: '',
     };
 
     this.searchTextChanged = this.searchTextChanged.bind(this);
-    this.search = this.search.bind(this);
-  }
-
-  search() {
-    let text = this.state.searchText;
-    socket.emit('search', text);
+    this.handleSearch = this.handleSearch.bind(this);
   }
 
   searchTextChanged(e) {
     this.setState({searchText: e.target.value});
   }
 
-  componentDidMount() {
-    socket.on('search-response', this.props.handleSearchResponse);
-
-    // initialize data
-    // this.search();
+  handleSearch() {
+    this.props.search(this.state.searchText);
   }
 
   render() {
@@ -43,7 +33,7 @@ class Search extends Component {
           <input onChange={this.searchTextChanged} placeholder="Search for gifs" />
         </div>
         <div>
-          <input id="submitSearch" value="Search" onClick={this.search} type="submit" />
+          <input id="submitSearch" value="Search" onClick={this.handleSearch} type="submit" />
         </div>
       </div>
     );

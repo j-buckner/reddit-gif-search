@@ -54,8 +54,10 @@ MongoClient.connect('mongodb://heroku_p4kv17tq:s268pk2ssbk5hd3v3m5175nkfg@ds1490
 
 var io = require('socket.io').listen(server);
 io.on('connection', function(socket){
-  socket.on('search', function(searchText){
-    console.log('search text is: ', searchText);
+  socket.on('search', function(searchData){
+    
+    let searchText = searchData.text;
+    let searchAfter = searchData.after; 
     if (searchText === '') {
       db.collection('links').find().limit( 25 ).toArray(function(err, results) {
         socket.emit('search-response', results);
@@ -68,8 +70,8 @@ io.on('connection', function(socket){
         }
       };
 
-      let subURLFormatted = `https://reddit.com/r/${searchText}.json?sort=top&t=week&limit=100`;
-      
+      let subURLFormatted = `https://reddit.com/r/${searchText}/top.json?sort=top&t=week`;
+      subURLFormatted = (searchAfter === '') ? subURLFormatted : subURLFormatted + `&after=${searchAfter}`;
       options['url'] = subURLFormatted;
       request(options, function(error, response, body) {
 
@@ -81,20 +83,21 @@ io.on('connection', function(socket){
           return console.log('Error response getting articles in sub: ', subURLFormatted); 
         }
 
-        var bodyJSON = JSON.parse(body);
-        var data = bodyJSON.data.children;
-        var articleIDs = data.map(function(article) { return article.data.id; });
+        let bodyJSON = JSON.parse(body);
+        if (bodyJSON.data.after) socket.emit('search-after', bodyJSON.data.after) ;
+
+        let data = bodyJSON.data.children;
+        let articleIDs = data.map(function(article) { return article.data.id; });
+        // console.log("Making this many requests: ", articleIDs.length);
         articleIDs.forEach(function(article) {
 
-          var articleCommentsURL = `https://reddit.com/r/${searchText}/comments/${article}.json?sort=top&t=week&limit=100`;
+          var articleCommentsURL = `https://reddit.com/r/${searchText}/comments/${article}.json?sort=top&t=week`;
           
           options['url'] = articleCommentsURL;
           request(articleCommentsURL, function(error, response, body) {
 
             try {
               var data = JSON.parse(body);
-              // console.log('response is: ', response);
-              // data = data.data;
               var comments = data.map(function(comment) { 
                 return comment.data.children;
               });
@@ -102,14 +105,6 @@ io.on('connection', function(socket){
             } catch (e) {
               return console.log('Error getting comments in article: ', articleCommentsURL);
             }
-
-            // console.log("looking at data!!", typeof data, data);
-
-            // data = data['data'];
-
-            // var comments = data.map(function(comment) { 
-            //   return comment.data.children;
-            // });
 
             var commentLinkData =  comments.map(function(comment) {
               var commentLinkData = comment.map(function(commentData) {
@@ -157,14 +152,7 @@ io.on('connection', function(socket){
               return;
             }
 
-            console.log("Sending back linkdata: ", linkData, articleCommentsURL);
             socket.emit('search-response', linkData);
-
-            // linkData.forEach(function(linkObject) {
-            //   // send back linkobj
-            //   res
-            //   socket.emit('search-response', results);
-            // });
 
           });
         });

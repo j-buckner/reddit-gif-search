@@ -4,6 +4,9 @@ import Search from './components/Search.jsx';
 import '../node_modules/react-resizable/css/styles.css';
 import '../node_modules/react-grid-layout/css/styles.css';
 
+const io = require('socket.io-client');
+const socket = io.connect('/');
+
 var ReactGridLayout = require('react-grid-layout');
 
 class App extends Component {
@@ -13,48 +16,76 @@ class App extends Component {
     this.state = {
       c_ids: [],
       links: [],
-      currRowX: 0,
-      layout: [],
+      after: '',
+      nextAfter: '',
+      currSearchText: ''
     }
 
+    this.search = this.search.bind(this);
     this.handleSearchResponse = this.handleSearchResponse.bind(this);
+    this.handleSearchResponseAfter = this.handleSearchResponseAfter.bind(this);
     this.onImgLoadFailed = this.onImgLoadFailed.bind(this);
     this.onImgLoad = this.onImgLoad.bind(this);
     this.generateLayout = this.generateLayout.bind(this);
+    this.componentDidMount = this.componentDidMount.bind(this);
   }
 
-  handleSearchResponse(links) {
+  search(searchText) {
+    const { links, after, nextAfter } = this.state;
+    if ((after === nextAfter) && (links.length !== 0)) return;
 
-    let currCIDs = this.state.c_ids;
-    let currLinks = this.state.links;
-    // let bindData = {currCIDs,}
-    links.forEach(function(link) {
-      if(!currCIDs.includes(link.c_id)) { 
-        currCIDs.push(link.c_id);
-        currLinks.push(link);
+    this.setState({after: this.state.nextAfter});
+    this.setState({currSearchText: searchText});
+
+    let searchData = {text: searchText, after: nextAfter}
+
+    socket.emit('search', searchData);
+  }
+
+  handleSearchResponse(newLinks) {
+    const { c_ids, links } = this.state;
+
+    newLinks.forEach(function(link) {
+      if(!c_ids.includes(link.c_id)) { 
+        c_ids.push(link.c_id);
+        links.push(link);
       }
     });
     
-    // var values = [
-    //     { name: 'someName1' },
-    //     { name: 'someName2' },
-    //     { name: 'someName4' },
-    //     { name: 'someName2' }
-    // ];
-    // const uniquifyLinks = links.filter((val,id,array) => array.indexOf(val) === id);
-    // let uniquifyLinks = [...new Set(links)]; 
+    this.setState({links: links, c_ids: c_ids});
+  }
 
-    // var linkCIDs = links.map(function(link){ return link.c_id });
-    // var isDuplicate = linkCIDs.some(function(item, idx){ 
-    //     return linkCIDs.indexOf(item) != idx 
-    // });
-    // console.log(uniquifyLinks);
+  handleSearchResponseAfter(after) {
+    this.setState({nextAfter: after});
+  }
 
+  //below taken from http://www.howtocreate.co.uk/tutorials/javascript/browserwindow
+  getScrollXY() {
+      var scrOfX = 0, scrOfY = 0;
+      if( typeof( window.pageYOffset ) === 'number' ) {
+          //Netscape compliant
+          scrOfY = window.pageYOffset;
+          scrOfX = window.pageXOffset;
+      } else if( document.body && ( document.body.scrollLeft || document.body.scrollTop ) ) {
+          //DOM compliant
+          scrOfY = document.body.scrollTop;
+          scrOfX = document.body.scrollLeft;
+      } else if( document.documentElement && ( document.documentElement.scrollLeft || document.documentElement.scrollTop ) ) {
+          //IE6 standards compliant mode
+          scrOfY = document.documentElement.scrollTop;
+          scrOfX = document.documentElement.scrollLeft;
+      }
+      return [ scrOfX, scrOfY ];
+  }
 
-    // let currLinks = this.state.uniquifyLinks;
-    // let newLinks = currLinks.concat(uniquifyLinks);
-    console.log(currLinks, currCIDs);
-    this.setState({links: currLinks, c_ids: currCIDs});
+  //taken from http://james.padolsey.com/javascript/get-document-height-cross-browser/
+  getDocHeight() {
+      var D = document;
+      return Math.max(
+          D.body.scrollHeight, D.documentElement.scrollHeight,
+          D.body.offsetHeight, D.documentElement.offsetHeight,
+          D.body.clientHeight, D.documentElement.clientHeight
+      );
   }
 
   onImgLoadFailed(event) {
@@ -67,9 +98,9 @@ class App extends Component {
   }
 
   onImgLoad(event) {
-    event.target.style.display = '';
-    
     const { links } = this.state;
+
+    event.target.style.display = '';
     
     let imgWidth = 0;
     let imgHeight = 0;
@@ -117,7 +148,7 @@ class App extends Component {
     if (links.length === 0) return [];
 
     let layout = [];
-    var currX = 0;
+    let currX = 0;
     links.forEach(function(link) {
 
       let linkWidth = 400;
@@ -151,6 +182,21 @@ class App extends Component {
     return layout;
   }
 
+  componentDidMount() {
+    document.addEventListener("scroll", function (event) {
+      if (this.getDocHeight() === this.getScrollXY()[1] + window.innerHeight) { 
+        this.search(this.state.currSearchText);
+        this.setState({"nextAfter": this.state.after});
+      }
+    }.bind(this));
+
+    socket.on('search-response', this.handleSearchResponse);
+    socket.on('search-after', this.handleSearchResponseAfter);
+
+    // initialize data
+    // this.search();
+  }
+
   render() {
     var linkRows = [];
     var layout = this.generateLayout();
@@ -170,7 +216,6 @@ class App extends Component {
       let type = link.url.includes('gifv') ? 'gifv' : 'gif';
       if (type === 'gifv'){
         let newURL = link.url.replace(/gifv/i, 'webm');
-        // console.log("Using cid ", link.c_id);
         linkRows.push(
           <div className="link-div" key={link.c_id} data-cid={link.c_id}>
             <video onLoadedMetadata={this.onImgLoad} style={imgStyle} preload="none" autoPlay="autoplay" loop="loop" >
@@ -190,7 +235,7 @@ class App extends Component {
     return (
       <div className="App">
         <div className="SearchDiv">
-          <Search handleSearchResponse={this.handleSearchResponse}/>
+          <Search search={this.search}/>
         </div>
         <ReactGridLayout className="layout" 
           layout={layout} 
