@@ -19,7 +19,7 @@ class App extends Component {
       links: [],
       after: '',
       nextAfter: '',
-      currSearchText: '',
+      currSearchText: ''
     }
 
     this.search = this.search.bind(this);
@@ -49,7 +49,7 @@ class App extends Component {
       if(!c_ids.includes(link.c_id)) { 
         c_ids.push(link.c_id);
         links.push(link);
-        layout.push({i: link.c_id, x: 0, y: 0, w: 350, h: 9, static: false});      
+        layout.push({i: link.c_id, x: 1, y: 0, w: 350, h: 9, static: false});      
       }
     });
     
@@ -114,7 +114,16 @@ class App extends Component {
   onImgLoad(event) {
     const { layout } = this.state;
 
-    event.target.style.display = '';
+    let c_id = event.target.parentElement.getAttribute('data-cid');
+    let layoutRowIndex = layout.findIndex(function(layoutRow) {
+      return layoutRow.i === c_id;
+    })
+
+    // need to figure this part out: 
+    // if (layoutRowIndex !== 0 && layout[layoutRowIndex - 1].x === 1) {
+    //   console.log('happened');
+    //   return;
+    // }
     
     let imgWidth = 0;
     let imgHeight = 0;
@@ -134,40 +143,38 @@ class App extends Component {
     let targetHeight = 350;
     let targetWidth = targetHeight * aspectRatio;
 
-    if (event.target.videoWidth && event.target.videoHeight) {
-      event.target.setAttribute('width', targetWidth);
-      event.target.setAttribute('height', targetHeight);
-    } else {
-      event.target.width = targetWidth + 15;
-      event.target.height = targetHeight;
-    }
-
-    let c_id = event.target.parentElement.getAttribute('data-cid');
-    let layoutRowIndex = layout.findIndex(function(layoutRow) {
-      return layoutRow.i === c_id;
-    })
-
     // Now that the image loaded, update this link's layout row to have correct width and xPos value
     let x = 0;
-    // let currLayoutRow = layout[layoutRowIndex];
-    if (layout.length > 1) {
+    if (layoutRowIndex !== 0) {
       let prevLayoutRow = layout[layoutRowIndex - 1];
       let prevWidth = prevLayoutRow.w;
       let prevX = prevLayoutRow.x;
       
       x = (prevX + prevWidth + targetWidth) <= window.innerWidth ? (prevX + prevWidth) : 0;
     } 
-
+    
     layout[layoutRowIndex] = {i: c_id, x: x, y: 0, w: targetWidth, h: 9, static: false};
+
+    if (event.target.videoWidth && event.target.videoHeight) {
+      event.target.setAttribute('width', targetWidth);
+      event.target.setAttribute('height', targetHeight);
+    } else {
+      event.target.width = targetWidth;
+      event.target.height = targetHeight;
+    }
+
+    event.target.style.display = '';
   }
 
   componentDidMount() {
-    document.addEventListener("scroll", function (event) {
-      if (this.getDocHeight() === this.getScrollXY()[1] + window.innerHeight) { 
-        this.search(this.state.currSearchText);
-        this.setState({"nextAfter": this.state.after});
-      }
-    }.bind(this));
+    // turn off pagination for now
+
+    // document.addEventListener("scroll", function (event) {
+    //   if (this.getDocHeight() === this.getScrollXY()[1] + window.innerHeight) { 
+    //     this.search(this.state.currSearchText);
+    //     this.setState({"nextAfter": this.state.after});
+    //   }
+    // }.bind(this));
 
     socket.on('search-response', this.handleSearchResponse);
     socket.on('search-after', this.handleSearchResponseAfter);
@@ -178,7 +185,6 @@ class App extends Component {
 
   render() {
     const { links, layout } = this.state;
-    
     const imgStyle = {
       'pointerEvents': 'none',
       'display': 'none'
@@ -211,11 +217,12 @@ class App extends Component {
           <Search search={this.search}/>
         </div>
         <ReactGridLayout className="layout" 
-          layout={layout} 
-          cols={window.innerWidth} 
-          rowHeight={30} 
-          width={window.innerWidth} 
-          isResizable={false}>        
+          layout={layout}
+          cols={window.innerWidth}
+          rowHeight={30}
+          width={window.innerWidth}
+          isResizable={false}
+          margin={[10, 10]}>
           {linkRows}
         </ReactGridLayout>
       </div>
