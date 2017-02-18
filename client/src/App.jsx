@@ -14,11 +14,12 @@ class App extends Component {
     super(props);
 
     this.state = {
+      layout: [],
       c_ids: [],
       links: [],
       after: '',
       nextAfter: '',
-      currSearchText: ''
+      currSearchText: '',
     }
 
     this.search = this.search.bind(this);
@@ -26,7 +27,6 @@ class App extends Component {
     this.handleSearchResponseAfter = this.handleSearchResponseAfter.bind(this);
     this.onImgLoadFailed = this.onImgLoadFailed.bind(this);
     this.onImgLoad = this.onImgLoad.bind(this);
-    this.generateLayout = this.generateLayout.bind(this);
     this.componentDidMount = this.componentDidMount.bind(this);
   }
 
@@ -43,16 +43,17 @@ class App extends Component {
   }
 
   handleSearchResponse(newLinks) {
-    const { c_ids, links } = this.state;
+    const { c_ids, links, layout } = this.state;
 
     newLinks.forEach(function(link) {
       if(!c_ids.includes(link.c_id)) { 
         c_ids.push(link.c_id);
         links.push(link);
+        layout.push({i: link.c_id, x: 0, y: 0, w: 350, h: 9, static: false});      
       }
     });
     
-    this.setState({links: links, c_ids: c_ids});
+    this.setState({links: links, layout: layout, c_ids: c_ids});
   }
 
   handleSearchResponseAfter(after) {
@@ -89,16 +90,29 @@ class App extends Component {
   }
 
   onImgLoadFailed(event) {
+    const { links, layout, c_ids } = this.state;
+
+    let c_id = event.target.parentElement.parentElement.getAttribute('data-cid');
     let failedURL = event.target.src.replace(/webm/i, 'gifv');
-    let linksUpdated = this.state.links.filter(function(link){
+
+    // Filter the failed url out of links, layout, and c_ids
+    let linksUpdated = links.filter(function(link){
       return (link.url !== failedURL);
     });
 
-    this.setState({links: linksUpdated});
+    let layoutUpdated = layout.filter(function(gridRow) {
+      return (gridRow.i !== c_id);
+    });
+
+    let c_idsUpdated = c_ids.filter(function(currCID) {
+      return (currCID !== c_id);
+    });
+
+    this.setState({links: linksUpdated, layout: layoutUpdated, c_ids: c_idsUpdated});
   }
 
   onImgLoad(event) {
-    const { links } = this.state;
+    const { layout } = this.state;
 
     event.target.style.display = '';
     
@@ -124,62 +138,27 @@ class App extends Component {
       event.target.setAttribute('width', targetWidth);
       event.target.setAttribute('height', targetHeight);
     } else {
-      event.target.width = targetWidth;
+      event.target.width = targetWidth + 15;
       event.target.height = targetHeight;
     }
 
     let c_id = event.target.parentElement.getAttribute('data-cid');
+    let layoutRowIndex = layout.findIndex(function(layoutRow) {
+      return layoutRow.i === c_id;
+    })
 
-    let newLinks = Object.assign([], links);
-    newLinks.some(function(currLink, index) {
-      if (currLink.c_id === c_id) {
-        newLinks[index]["width"] = targetWidth;
-        newLinks[index]["height"] = targetHeight;
-
-        this.setState({links: newLinks});
-        return true;
-      }
-    }.bind(this));
-  }
-
-  generateLayout() {
-    const { links } = this.state;
-
-    if (links.length === 0) return [];
-
-    let layout = [];
-    let currX = 0;
-    links.forEach(function(link) {
-
-      let linkWidth = 400;
-      if (!link.width) {
-        linkWidth = 400;
-      } else {
-        linkWidth = link.width + 10;
-      }
-
-      let linkHeight = 400;
-      if (!link.height) {
-        linkHeight = 400;
-      } else {
-        linkHeight = link.height + 10;
-      }
-
-      // linkHeight = Math.round(linkHeight/30);
-
-      // Hard code for now
-      linkHeight = 9;
-
-      layout.push({i: link.c_id, x: currX, y: 0, w: linkWidth, h:linkHeight, static: false});
+    // Now that the image loaded, update this link's layout row to have correct width and xPos value
+    let x = 0;
+    // let currLayoutRow = layout[layoutRowIndex];
+    if (layout.length > 1) {
+      let prevLayoutRow = layout[layoutRowIndex - 1];
+      let prevWidth = prevLayoutRow.w;
+      let prevX = prevLayoutRow.x;
       
-      if (currX + linkWidth > window.innerWidth) {
-        currX = 0;
-      } else {
-        currX += linkWidth;
-      }
-    });
+      x = (prevX + prevWidth + targetWidth) <= window.innerWidth ? (prevX + prevWidth) : 0;
+    } 
 
-    return layout;
+    layout[layoutRowIndex] = {i: c_id, x: x, y: 0, w: targetWidth, h: 9, static: false};
   }
 
   componentDidMount() {
@@ -198,21 +177,15 @@ class App extends Component {
   }
 
   render() {
-    var linkRows = [];
-    var layout = this.generateLayout();
+    const { links, layout } = this.state;
+    
     const imgStyle = {
       'pointerEvents': 'none',
       'display': 'none'
     };
 
-    // <div className="link-div" key={link.c_id} data-cid={link.c_id}>
-    //   <img onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
-    //   <div>
-    //     <a href={link.url}>Link</a>
-    //   </div>
-    // </div>
-
-    this.state.links.forEach(function(link, index) {
+    const linkRows = [];
+    links.forEach(function(link, index) {
       let type = link.url.includes('gifv') ? 'gifv' : 'gif';
       if (type === 'gifv'){
         let newURL = link.url.replace(/gifv/i, 'webm');
