@@ -7,15 +7,11 @@ import '../node_modules/react-grid-layout/css/styles.css';
 const io = require('socket.io-client');
 const socket = io.connect('/');
 
-var ReactGridLayout = require('react-grid-layout');
-var count = 0;
-
 class App extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      layout: [],
       c_ids: [],
       links: [],
       after: '',
@@ -44,17 +40,16 @@ class App extends Component {
   }
 
   handleSearchResponse(newLinks) {
-    const { c_ids, links, layout } = this.state;
+    const { c_ids, links } = this.state;
 
     newLinks.forEach(function(link) {
       if(!c_ids.includes(link.c_id)) { 
         c_ids.push(link.c_id);
         links.push(link);
-        layout.push({i: link.c_id, x: 1, y: 0, w: 350, h: 9, static: true});      
       }
     });
     
-    this.setState({links: links, layout: layout, c_ids: c_ids});
+    this.setState({links: links, c_ids: c_ids});
   }
 
   handleSearchResponseAfter(after) {
@@ -91,54 +86,24 @@ class App extends Component {
   }
 
   onImgLoadFailed(event) {
-    const { links, layout, c_ids } = this.state;
+    const { links, c_ids } = this.state;
 
     let c_id = event.target.parentElement.parentElement.getAttribute('data-cid');
     let failedURL = event.target.src.replace(/webm/i, 'gifv');
 
-    // Filter the failed url out of links, layout, and c_ids
+    // Filter the failed url out of links and c_ids
     let linksUpdated = links.filter(function(link){
       return (link.url !== failedURL);
-    });
-
-    let layoutUpdated = layout.filter(function(gridRow) {
-      return (gridRow.i !== c_id);
     });
 
     let c_idsUpdated = c_ids.filter(function(currCID) {
       return (currCID !== c_id);
     });
 
-    this.setState({links: linksUpdated, layout: layoutUpdated, c_ids: c_idsUpdated});
-  }
-  
-  updateLayout(layout) {
-    layout.forEach(function(layoutRow, index) {
-      if (index === 0) {layoutRow.x = 0; return;}
-      let prevLayoutRow = layout[index - 1];
-      layoutRow.x = (prevLayoutRow.x + prevLayoutRow.w + layoutRow.w) <= window.innerWidth ? (prevLayoutRow.x + prevLayoutRow.w) : 0;
-    });
-    this.setState({layout: layout});
+    this.setState({links: linksUpdated, c_ids: c_idsUpdated});
   }
 
   onImgLoad(event) {
-    const { layout } = this.state;
-
-    let c_id = event.target.parentElement.getAttribute('data-cid');
-    let layoutRowIndex = layout.findIndex(function(layoutRow) {
-      return layoutRow.i === c_id;
-    })
-
-
-    let newIndex = layout.findIndex(function(layoutRow) { return (layoutRow.x !== 1); });
-    if (newIndex === -1 || newIndex === 0) newIndex = 1;
-    newIndex--;
-    // console.log('new index 1 ', newIndex);
-    //swap
-    let prevRow = layout[layoutRowIndex];
-    layout[layoutRowIndex] = layout[newIndex];
-    layout[newIndex] = prevRow;
-
     let imgWidth = 0;
     let imgHeight = 0;
     if (event.target.videoWidth && event.target.videoHeight) {
@@ -154,21 +119,8 @@ class App extends Component {
 
     let aspectRatio = imgWidth / imgHeight;
 
-    let targetHeight = 350;
+    let targetHeight = 300;
     let targetWidth = targetHeight * aspectRatio;
-
-    // Now that the image loaded, update this link's layout row to have correct width and xPos value
-    let x = 0;
-    // console.log('new index: ', newIndex, 'layout is: ', layout);
-    // if (newIndex !== 0) {
-    //   let prevLayoutRow = layout[newIndex - 1];
-    //   let prevWidth = prevLayoutRow.w;
-    //   let prevX = prevLayoutRow.x;
-      
-    //   x = (prevX + prevWidth + targetWidth) <= window.innerWidth ? (prevX + prevWidth) : 0;
-    // } 
-    
-    layout[newIndex] = {i: c_id, x: x, y: 0, w: targetWidth + 12, h: 9, static: false};
 
     if (event.target.videoWidth && event.target.videoHeight) {
       event.target.setAttribute('width', targetWidth);
@@ -179,14 +131,10 @@ class App extends Component {
     }
 
     event.target.style.display = '';
-
-    count++;
-    if (count === layout.length) this.updateLayout(layout);
+    event.target.style.margin = "3.5px";
   }
 
   componentDidMount() {
-    // turn off pagination for now
-
     document.addEventListener("scroll", function (event) {
       if (this.getDocHeight() === this.getScrollXY()[1] + window.innerHeight) { 
         this.search(this.state.currSearchText);
@@ -202,8 +150,7 @@ class App extends Component {
   }
 
   render() {
-    const { links, layout } = this.state;
-    // console.log('on render: ', links, layout);
+    const { links } = this.state;
     const imgStyle = {
       'pointerEvents': 'none',
       'display': 'none'
@@ -215,17 +162,13 @@ class App extends Component {
       if (type === 'gifv'){
         let newURL = link.url.replace(/gifv/i, 'webm');
         linkRows.push(
-          <div className="link-div" key={link.c_id} data-cid={link.c_id}>
-            <video onLoadedMetadata={this.onImgLoad} style={imgStyle} preload="none" autoPlay="autoplay" loop="loop" >
-                <source src={newURL} type="video/webm" onError={this.onImgLoadFailed}></source>
-            </video> 
-          </div>
+          <video onLoadedMetadata={this.onImgLoad} style={imgStyle} preload="none" autoPlay="autoplay" loop="loop" >
+              <source src={newURL} type="video/webm" onError={this.onImgLoadFailed}></source>
+          </video>
         );
       } else {
         linkRows.push(
-          <div className="link-div" key={link.c_id} data-cid={link.c_id}>
-            <img onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
-          </div>
+          <img onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
         );
       }
     }.bind(this));
@@ -235,26 +178,10 @@ class App extends Component {
         <div className="SearchDiv">
           <Search search={this.search}/>
         </div>
-        <ReactGridLayout className="layout" 
-          layout={layout}
-          cols={window.innerWidth}
-          rowHeight={30}
-          width={window.innerWidth}
-          isResizable={false}
-          margin={[10, 10]}>
-          {linkRows}
-        </ReactGridLayout>
+        {linkRows}
       </div>
     );
   }
 }
 
 export default App;
-
-// .link-div {
-//   outline: #333 solid 2px;
-// }
-
-// .link-div:hover {
-//   outline: #4747d1 solid 4px;
-// }
