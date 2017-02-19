@@ -53,7 +53,15 @@ class App extends Component {
   }
 
   handleSearchResponseAfter(after) {
-    this.setState({nextAfter: after});
+    const { currSearchText } = this.state;
+    
+    // Set pagination - if the current page isn't filled call for next page now
+    if (document.body.scrollHeight <= document.body.clientHeight) {
+      this.setState({after: after});
+      socket.emit('search', {text: currSearchText, after: after});
+    } else {
+      this.setState({nextAfter: after});
+    }
   }
 
   //below taken from http://www.howtocreate.co.uk/tutorials/javascript/browserwindow
@@ -162,13 +170,13 @@ class App extends Component {
       if (type === 'gifv'){
         let newURL = link.url.replace(/gifv/i, 'webm');
         linkRows.push(
-          <video onLoadedMetadata={this.onImgLoad} style={imgStyle} preload="none" autoPlay="autoplay" loop="loop" >
+          <video key={link.c_id} onLoadedMetadata={this.onImgLoad} style={imgStyle} preload="none" autoPlay="autoplay" loop="loop" >
               <source src={newURL} type="video/webm" onError={this.onImgLoadFailed}></source>
           </video>
         );
       } else {
         linkRows.push(
-          <img onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
+          <img key={link.c_id} onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
         );
       }
     }.bind(this));
