@@ -16,15 +16,22 @@ class App extends Component {
       links: [],
       after: '',
       nextAfter: '',
-      currSearchText: ''
+      currSearchText: 'all'
     }
 
+    this.clearLinks = this.clearLinks.bind(this);
     this.search = this.search.bind(this);
     this.handleSearchResponse = this.handleSearchResponse.bind(this);
     this.handleSearchResponseAfter = this.handleSearchResponseAfter.bind(this);
     this.onImgLoadFailed = this.onImgLoadFailed.bind(this);
     this.onImgLoad = this.onImgLoad.bind(this);
     this.componentDidMount = this.componentDidMount.bind(this);
+  }
+
+  clearLinks() {
+    this.setState({links: [], after: '', nextAfter: ''});
+    // let wrapperDiv = this.getElementById('linksContainer').innerHTML = "";
+
   }
 
   search(searchText, newAfter) {
@@ -38,10 +45,14 @@ class App extends Component {
     this.setState({currSearchText: searchText});
 
     socket.emit('search', searchData);
+
+    document.getElementById('loadingText').style.display = '';
   }
 
   handleSearchResponse(newLinks) {
     const { c_ids, links } = this.state;
+
+    document.getElementById('loadingText').style.display = 'none';
 
     newLinks.forEach(function(link) {
       if(!c_ids.includes(link.c_id)) { 
@@ -138,13 +149,13 @@ class App extends Component {
       event.target.height = targetHeight;
     }
 
-    event.target.style.margin = '3.5px 3.5px 0px 3.5px';
+    event.target.style.margin = '-2px 2px -2px 2px';
     event.target.style.display = '';
   }
 
   componentDidMount() {
     document.addEventListener("scroll", function(event) {
-      if ( Math.round((this.getDocHeight()*2)/3) <= this.getScrollXY()[1] + window.innerHeight) {
+      if ( Math.round(this.getDocHeight() - 450) <= this.getScrollXY()[1] + window.innerHeight) {
         this.search(this.state.currSearchText, '');
       }
     }.bind(this));
@@ -175,12 +186,23 @@ class App extends Component {
       }
     }.bind(this));
 
+    const loadingStyle = {
+      'display': 'none'
+    };
+
     return (
-      <div className="App">
+      <div id="AppWrapper" className="App">
         <div className="SearchDiv">
-          <Search search={this.search}/>
+          <Search search={this.search} searchText={this.currSearchText} clearLinks={this.clearLinks}/>
         </div>
-        {linkRows}
+        <div id="linksContainer">
+          {linkRows}
+        </div>
+        <div className="flex three">
+          <div><span></span></div>
+          <h4 id="loadingText" style={loadingStyle}>Loading...</h4>
+          <div><span></span></div>
+        </div>
       </div>
     );
   }

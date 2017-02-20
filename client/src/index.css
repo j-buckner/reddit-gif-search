@@ -7,8 +7,7 @@ body {
   font-family: sans-serif;
 }
 
-#root { 
-  margin: 0;
-  padding: 0;
-  height: 100%;
+#root {
+	margin-left: 55px;
+	margin-right: 55px;
 }
