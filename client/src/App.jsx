@@ -66,37 +66,37 @@ class App extends Component {
 
   //below taken from http://www.howtocreate.co.uk/tutorials/javascript/browserwindow
   getScrollXY() {
-      var scrOfX = 0, scrOfY = 0;
-      if( typeof( window.pageYOffset ) === 'number' ) {
-          //Netscape compliant
-          scrOfY = window.pageYOffset;
-          scrOfX = window.pageXOffset;
-      } else if( document.body && ( document.body.scrollLeft || document.body.scrollTop ) ) {
-          //DOM compliant
-          scrOfY = document.body.scrollTop;
-          scrOfX = document.body.scrollLeft;
-      } else if( document.documentElement && ( document.documentElement.scrollLeft || document.documentElement.scrollTop ) ) {
-          //IE6 standards compliant mode
-          scrOfY = document.documentElement.scrollTop;
-          scrOfX = document.documentElement.scrollLeft;
-      }
-      return [ scrOfX, scrOfY ];
+    var scrOfX = 0, scrOfY = 0;
+    if( typeof( window.pageYOffset ) === 'number' ) {
+      //Netscape compliant
+      scrOfY = window.pageYOffset;
+      scrOfX = window.pageXOffset;
+    } else if( document.body && ( document.body.scrollLeft || document.body.scrollTop ) ) {
+      //DOM compliant
+      scrOfY = document.body.scrollTop;
+      scrOfX = document.body.scrollLeft;
+    } else if( document.documentElement && ( document.documentElement.scrollLeft || document.documentElement.scrollTop ) ) {
+      //IE6 standards compliant mode
+      scrOfY = document.documentElement.scrollTop;
+      scrOfX = document.documentElement.scrollLeft;
+    }
+    return [ scrOfX, scrOfY ];
   }
 
   //taken from http://james.padolsey.com/javascript/get-document-height-cross-browser/
   getDocHeight() {
-      var D = document;
-      return Math.max(
-          D.body.scrollHeight, D.documentElement.scrollHeight,
-          D.body.offsetHeight, D.documentElement.offsetHeight,
-          D.body.clientHeight, D.documentElement.clientHeight
-      );
+    var D = document;
+    return Math.max(
+      D.body.scrollHeight, D.documentElement.scrollHeight,
+      D.body.offsetHeight, D.documentElement.offsetHeight,
+      D.body.clientHeight, D.documentElement.clientHeight
+    );
   }
 
   onImgLoadFailed(event) {
     const { links, c_ids } = this.state;
 
-    let c_id = event.target.parentElement.parentElement.getAttribute('data-cid');
+    let c_id = event.target.getAttribute('data-cid');
     let failedURL = event.target.src.replace(/webm/i, 'gifv');
 
     // Filter the failed url out of links and c_ids
@@ -138,12 +138,12 @@ class App extends Component {
       event.target.height = targetHeight;
     }
 
+    event.target.style.margin = '3.5px 3.5px 0px 3.5px';
     event.target.style.display = '';
-    event.target.style.margin = "3.5px";
   }
 
   componentDidMount() {
-    document.addEventListener("scroll", function (event) {
+    document.addEventListener("scroll", function(event) {
       if (this.getDocHeight() === this.getScrollXY()[1] + window.innerHeight) { 
         this.search(this.state.currSearchText);
         this.setState({"nextAfter": this.state.after});
@@ -152,9 +152,6 @@ class App extends Component {
 
     socket.on('search-response', this.handleSearchResponse);
     socket.on('search-after', this.handleSearchResponseAfter);
-
-    // initialize data
-    // this.search();
   }
 
   render() {
@@ -170,13 +167,11 @@ class App extends Component {
       if (type === 'gifv'){
         let newURL = link.url.replace(/gifv/i, 'webm');
         linkRows.push(
-          <video key={link.c_id} onLoadedMetadata={this.onImgLoad} style={imgStyle} preload="none" autoPlay="autoplay" loop="loop" >
-              <source src={newURL} type="video/webm" onError={this.onImgLoadFailed}></source>
-          </video>
+          <video src={newURL} type="video/webm" onError={this.onImgLoadFailed} key={link.c_id} data-cid={link.c_id} onLoadedMetadata={this.onImgLoad} style={imgStyle} autoPlay="true" loop="loop"/>
         );
       } else {
         linkRows.push(
-          <img key={link.c_id} onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
+          <img key={link.c_id} data-cid={link.c_id} onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
         );
       }
     }.bind(this));

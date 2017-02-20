@@ -7,7 +7,6 @@ var randomstring = require('randomstring');
 var needle = require('needle');
 var getURLs = require('get-urls');
 
-
 app.set('port', (process.env.PORT || 3001));
 
 // Express only serves static assets in production
