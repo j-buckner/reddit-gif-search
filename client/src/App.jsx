@@ -27,14 +27,15 @@ class App extends Component {
     this.componentDidMount = this.componentDidMount.bind(this);
   }
 
-  search(searchText) {
-    const { links, after, nextAfter } = this.state;
-    if ((after === nextAfter) && (links.length !== 0)) return;
+  search(searchText, newAfter) {
+    const { after, nextAfter } = this.state;
 
-    this.setState({after: this.state.nextAfter});
+    if (newAfter === '') newAfter = nextAfter;
+    if (newAfter === after && after !== '') return;
+
+    let searchData = {text: searchText, after: newAfter};
+    this.setState({after: newAfter});
     this.setState({currSearchText: searchText});
-
-    let searchData = {text: searchText, after: nextAfter}
 
     socket.emit('search', searchData);
   }
@@ -57,11 +58,10 @@ class App extends Component {
     
     // Set pagination - if the current page isn't filled call for next page now
     if (document.body.scrollHeight <= document.body.clientHeight) {
-      this.setState({after: after});
-      socket.emit('search', {text: currSearchText, after: after});
-    } else {
-      this.setState({nextAfter: after});
+      this.search(currSearchText, after);
     }
+
+    this.setState({nextAfter: after});
   }
 
   //below taken from http://www.howtocreate.co.uk/tutorials/javascript/browserwindow
@@ -144,9 +144,8 @@ class App extends Component {
 
   componentDidMount() {
     document.addEventListener("scroll", function(event) {
-      if (this.getDocHeight() === this.getScrollXY()[1] + window.innerHeight) { 
-        this.search(this.state.currSearchText);
-        this.setState({"nextAfter": this.state.after});
+      if ( Math.round((this.getDocHeight()*2)/3) <= this.getScrollXY()[1] + window.innerHeight) {
+        this.search(this.state.currSearchText, '');
       }
     }.bind(this));
 

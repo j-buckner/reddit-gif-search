@@ -17,7 +17,7 @@ class Search extends Component {
   }
 
   handleSearch() {
-    this.props.search(this.state.searchText);
+    this.props.search(this.state.searchText, '');
   }
 
   render() {
