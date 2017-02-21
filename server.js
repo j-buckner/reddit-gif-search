@@ -55,7 +55,7 @@ MongoClient.connect('mongodb://heroku_p4kv17tq:s268pk2ssbk5hd3v3m5175nkfg@ds1490
 
 io.on('connection', function(socket){
   socket.on('search', function(searchData){
-    
+    console.log('received search', searchData);
     let searchText = searchData.text;
     let searchAfter = searchData.after; 
     if (searchText === '') {

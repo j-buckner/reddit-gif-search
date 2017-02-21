@@ -75,7 +75,7 @@ class Search extends Component {
         <div>
           <h2>Search Reddit for Gifs</h2>
         </div>
-        <div class="off fourth"><span></span></div>
+        <div className="off fourth"><span></span></div>
         <div><span></span></div>
         <div>
           <input id="searchInput" value={this.props.searchText} onChange={this.searchTextChanged} />

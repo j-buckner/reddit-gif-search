@@ -5,7 +5,7 @@ import '../node_modules/react-resizable/css/styles.css';
 import '../node_modules/react-grid-layout/css/styles.css';
 
 const io = require('socket.io-client');
-const socket = io.connect('/');
+const socket = io.connect(':3001');
 
 class App extends Component {
   constructor(props) {
@@ -45,7 +45,7 @@ class App extends Component {
     this.setState({currSearchText: searchText});
 
     socket.emit('search', searchData);
-
+    console.log('just emitted');
     document.getElementById('loadingText').style.display = '';
   }
 
