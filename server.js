@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const MongoClient = require('mongodb').MongoClient;
 var server = require('http').Server(app);  
-var io = require('socket.io').listen(server);
+var io = require('socket.io', { rememberTransport: false, transports: ['WebSocket', 'Flash Socket', 'AJAX long-polling'] }).listen(server);
 var request = require('request');
 var randomstring = require('randomstring');
 var needle = require('needle');
@@ -54,6 +54,7 @@ MongoClient.connect('mongodb://heroku_p4kv17tq:s268pk2ssbk5hd3v3m5175nkfg@ds1490
 });
 
 io.on('connection', function(socket){
+  console.log('oooooo');
   socket.on('search', function(searchData){
     console.log('received search', searchData);
     let searchText = searchData.text;
@@ -160,3 +161,5 @@ io.on('connection', function(socket){
     }
   });
 });
+
+server.listen(app.get('port'));

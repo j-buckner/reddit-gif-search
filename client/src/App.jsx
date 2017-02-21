@@ -5,7 +5,7 @@ import '../node_modules/react-resizable/css/styles.css';
 import '../node_modules/react-grid-layout/css/styles.css';
 
 const io = require('socket.io-client');
-const socket = io.connect(':3001');
+const socket = io.connect('/');
 
 class App extends Component {
   constructor(props) {
@@ -30,8 +30,6 @@ class App extends Component {
 
   clearLinks() {
     this.setState({links: [], after: '', nextAfter: ''});
-    // let wrapperDiv = this.getElementById('linksContainer').innerHTML = "";
-
   }
 
   search(searchText, newAfter) {
