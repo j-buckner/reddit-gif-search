@@ -2,10 +2,12 @@ const express = require('express');
 const app = express();
 const MongoClient = require('mongodb').MongoClient;
 var server = require('http').Server(app);  
+var io = require('socket.io').listen(server);
 var request = require('request');
 var randomstring = require('randomstring');
 var needle = require('needle');
 var getURLs = require('get-urls');
+
 
 app.set('port', (process.env.PORT || 3001));
 
@@ -51,7 +53,6 @@ MongoClient.connect('mongodb://heroku_p4kv17tq:s268pk2ssbk5hd3v3m5175nkfg@ds1490
 
 });
 
-var io = require('socket.io').listen(server);
 io.on('connection', function(socket){
   socket.on('search', function(searchData){
     
