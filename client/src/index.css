@@ -8,6 +8,7 @@ body {
 }
 
 #root {
-	margin-left: 55px;
-	margin-right: 55px;
+	/*margin-left: 55px;*/
+	/*margin-right: 55px;*/
+	/*overflow: auto;*/
 }

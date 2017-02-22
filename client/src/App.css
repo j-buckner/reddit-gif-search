@@ -1,5 +1,5 @@
 .App {
-  position: relative;
+  /*position: relative;*/
   margin: 0;
   padding: 0;
   height: 100%;
@@ -34,6 +34,21 @@ h4 {
     margin-left: 33.5%;
     width: 100%;
   }
+}
+
+#linksContainer {
+  width: 100%;
+  -webkit-column-count: auto;
+  -webkit-column-gap: 2px;
+  -webkit-column-fill: auto;
+  -webkit-column-width: 435px;
+  -moz-column-count: auto;
+  -moz-column-gap: 2px;
+  -moz-column-fill: auto;
+  column-count: auto;
+  column-gap: 2px;
+  column-fill: auto;
+  column-width: 435px;
 }
 
 /*.link-div {

@@ -152,7 +152,7 @@ io.on('connection', function(socket){
             if (linkData.length === 0) {
               return;
             }
-
+            console.log('sending back data');
             socket.emit('search-response', linkData);
 
           });

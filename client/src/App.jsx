@@ -3,6 +3,7 @@ import './App.css';
 import Search from './components/Search.jsx';
 import '../node_modules/react-resizable/css/styles.css';
 import '../node_modules/react-grid-layout/css/styles.css';
+import Masonry from 'react-masonry-component';
 
 const io = require('socket.io-client');
 const socket = io.connect('/');
@@ -43,7 +44,7 @@ class App extends Component {
     this.setState({currSearchText: searchText});
 
     socket.emit('search', searchData);
-    console.log('just emitted');
+    console.log('just emitted', searchData);
     document.getElementById('loadingText').style.display = '';
   }
 
@@ -66,6 +67,7 @@ class App extends Component {
     const { currSearchText } = this.state;
     
     // Set pagination - if the current page isn't filled call for next page now
+    console.log('comparing: ', document.body.scrollHeight, document.body.clientHeight);
     if (document.body.scrollHeight <= document.body.clientHeight) {
       this.search(currSearchText, after);
     }
@@ -136,8 +138,8 @@ class App extends Component {
 
     let aspectRatio = imgWidth / imgHeight;
 
-    let targetHeight = 300;
-    let targetWidth = targetHeight * aspectRatio;
+    let targetWidth = 435;
+    let targetHeight = targetWidth / aspectRatio;
 
     if (event.target.videoWidth && event.target.videoHeight) {
       event.target.setAttribute('width', targetWidth);
@@ -147,7 +149,7 @@ class App extends Component {
       event.target.height = targetHeight;
     }
 
-    event.target.style.margin = '-2px 2px -2px 2px';
+    // event.target.style.margin = '-2px 2px -2px 2px';
     event.target.style.display = '';
   }
 
@@ -165,21 +167,36 @@ class App extends Component {
   render() {
     const { links } = this.state;
     const imgStyle = {
-      'pointerEvents': 'none',
-      'display': 'none'
+      'pointerEvents': 'none'
+      // 'display': 'inline-block',
+      // 'vertical-align': 'top',
+      // 'overflow': 'auto'
     };
+
+    // const imgDivStyle = {
+    //   'display': 'inline-block',
+    //   'vertical-align': 'top'
+    // };
 
     const linkRows = [];
     links.forEach(function(link, index) {
+      let imgDivStyle = {
+
+      };
+
       let type = link.url.includes('gifv') ? 'gifv' : 'gif';
       if (type === 'gifv'){
         let newURL = link.url.replace(/gifv/i, 'webm');
         linkRows.push(
-          <video src={newURL} type="video/webm" onError={this.onImgLoadFailed} key={link.c_id} data-cid={link.c_id} onLoadedMetadata={this.onImgLoad} style={imgStyle} autoPlay="true" loop="loop"/>
+          <div className="linkDiv" key={link.c_id} style={imgDivStyle}>
+            <video src={newURL} type="video/webm" onError={this.onImgLoadFailed} data-cid={link.c_id} onLoadedMetadata={this.onImgLoad} style={imgStyle} autoPlay="true" loop="loop"/>
+          </div>
         );
       } else {
         linkRows.push(
-          <img key={link.c_id} data-cid={link.c_id} onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
+          <div className="linkDiv" key={link.c_id} style={imgDivStyle}>
+            <img data-cid={link.c_id} onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
+          </div>
         );
       }
     }.bind(this));
@@ -188,14 +205,26 @@ class App extends Component {
       'display': 'none'
     };
 
+    // const linkContainerStyle = {
+    //   // 'maxWidth': '600px',
+    //   // 'flex': 1,
+    //   // 'display': 'flex',
+    //   // 'overflow': 'auto'
+    // }
+
     return (
       <div id="AppWrapper" className="App">
         <div className="SearchDiv">
           <Search search={this.search} searchText={this.currSearchText} clearLinks={this.clearLinks}/>
         </div>
-        <div id="linksContainer">
+        <Masonry
+          className={'linkDiv'} // default ''
+          elementType={'ul'} // default 'div'
+          disableImagesLoaded={false} // default false
+          updateOnEachImageLoad={false} // default false and works only if disableImagesLoaded is false
+        >
           {linkRows}
-        </div>
+        </Masonry>
         <div className="flex three">
           <div><span></span></div>
           <h4 id="loadingText" style={loadingStyle}>Loading...</h4>
