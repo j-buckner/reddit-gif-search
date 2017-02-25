@@ -32,7 +32,7 @@ class Search extends Component {
 
   handleSearch() {
     const { searchText, searchTime } = this.state;
-    
+
     document.getElementById('loadingText').style.display = '';
     this.props.clearLinks();
     this.props.search(searchText, searchTime, '');
@@ -60,7 +60,7 @@ class Search extends Component {
     }.bind(this), 450);
 
     let searchInput = document.getElementById('searchInput');
-    searchInput.value = searchInput.value + placeHolderText[letterIndex];
+    searchInput.value += placeHolderText[letterIndex];
   }
 
   componentDidMount() {

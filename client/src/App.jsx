@@ -55,12 +55,15 @@ class App extends Component {
 
     document.getElementById('loadingText').style.display = 'none';
 
-    newLinks.forEach(function(link) {
+    newLinks.forEach((newLink) => {
 
-      if (link.searchText !== searchText) return;
-      if (link.searchTime !== searchTime) return;
+      if (newLink.searchText !== searchText) return;
+      if (newLink.searchTime !== searchTime) return;
 
-      links.push(link);
+      // Don't let duplicates through
+      if (links.findIndex((link) => { console.log(link, newLink); return link.url === newLink.url; }) !== -1) return;
+
+      links.push(newLink);
     });
     
     this.setState({links: links});
