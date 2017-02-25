@@ -67,7 +67,6 @@ class App extends Component {
     const { currSearchText } = this.state;
     
     // Set pagination - if the current page isn't filled call for next page now
-    console.log('comparing: ', document.body.scrollHeight, document.body.clientHeight);
     if (document.body.scrollHeight <= document.body.clientHeight) {
       this.search(currSearchText, after);
     }
@@ -138,7 +137,7 @@ class App extends Component {
 
     let aspectRatio = imgWidth / imgHeight;
 
-    let targetWidth = 435;
+    let targetWidth = 415;
     let targetHeight = targetWidth / aspectRatio;
 
     if (event.target.videoWidth && event.target.videoHeight) {
@@ -168,9 +167,6 @@ class App extends Component {
     const { links } = this.state;
     const imgStyle = {
       'pointerEvents': 'none'
-      // 'display': 'inline-block',
-      // 'vertical-align': 'top',
-      // 'overflow': 'auto'
     };
 
     // const imgDivStyle = {
@@ -188,13 +184,13 @@ class App extends Component {
       if (type === 'gifv'){
         let newURL = link.url.replace(/gifv/i, 'webm');
         linkRows.push(
-          <div className="linkDiv" key={link.c_id} style={imgDivStyle}>
+          <div className="linkDivChild" key={link.c_id} style={imgDivStyle}>
             <video src={newURL} type="video/webm" onError={this.onImgLoadFailed} data-cid={link.c_id} onLoadedMetadata={this.onImgLoad} style={imgStyle} autoPlay="true" loop="loop"/>
           </div>
         );
       } else {
         linkRows.push(
-          <div className="linkDiv" key={link.c_id} style={imgDivStyle}>
+          <div className="linkDivChild" key={link.c_id} style={imgDivStyle}>
             <img data-cid={link.c_id} onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
           </div>
         );
@@ -205,21 +201,13 @@ class App extends Component {
       'display': 'none'
     };
 
-    // const linkContainerStyle = {
-    //   // 'maxWidth': '600px',
-    //   // 'flex': 1,
-    //   // 'display': 'flex',
-    //   // 'overflow': 'auto'
-    // }
-
     return (
       <div id="AppWrapper" className="App">
         <div className="SearchDiv">
           <Search search={this.search} searchText={this.currSearchText} clearLinks={this.clearLinks}/>
         </div>
         <Masonry
-          className={'linkDiv'} // default ''
-          elementType={'ul'} // default 'div'
+          className={'linkDiv'}
           disableImagesLoaded={false} // default false
           updateOnEachImageLoad={false} // default false and works only if disableImagesLoaded is false
         >

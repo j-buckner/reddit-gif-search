@@ -1,5 +1,4 @@
 .App {
-  /*position: relative;*/
   margin: 0;
   padding: 0;
   height: 100%;
@@ -7,13 +6,6 @@
 
 #submitSearch {
   margin: 0;
-}
-
-.link {
-  border-style: solid;
-  border-width: 5px;
-  height: 50px;
-  width: 100px;
 }
 
 h4 {
@@ -36,25 +28,16 @@ h4 {
   }
 }
 
-#linksContainer {
-  width: 100%;
-  -webkit-column-count: auto;
-  -webkit-column-gap: 2px;
-  -webkit-column-fill: auto;
-  -webkit-column-width: 435px;
-  -moz-column-count: auto;
-  -moz-column-gap: 2px;
-  -moz-column-fill: auto;
-  column-count: auto;
-  column-gap: 2px;
-  column-fill: auto;
-  column-width: 435px;
+.linkDivChild {
+  margin: 5px;
 }
 
-/*.link-div {
-  outline: #333 solid 2px;
+.linkDiv {
+      box-sizing: border-box;
+    display: flex;
+    flex-flow: row wrap;
+    font-size: 0;
+    margin-right: auto;
+    margin-left: auto;
+    width: 90%;
 }
-
-.link-div:hover {
-  outline: #4747d1 solid 4px;
-}*/

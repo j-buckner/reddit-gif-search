@@ -71,7 +71,7 @@ io.on('connection', function(socket){
         }
       };
 
-      let subURLFormatted = `https://reddit.com/r/${searchText}/top.json?sort=top&t=week`;
+      let subURLFormatted = `https://reddit.com/r/${searchText}/top.json?sort=top&t=year`;
       subURLFormatted = (searchAfter === '') ? subURLFormatted : subURLFormatted + `&after=${searchAfter}`;
       options['url'] = subURLFormatted;
       request(options, function(error, response, body) {
@@ -92,7 +92,7 @@ io.on('connection', function(socket){
         // console.log("Making this many requests: ", articleIDs.length);
         articleIDs.forEach(function(article) {
 
-          var articleCommentsURL = `https://reddit.com/r/${searchText}/comments/${article}.json?sort=top&t=week`;
+          var articleCommentsURL = `https://reddit.com/r/${searchText}/comments/${article}.json?sort=top&t=year`;
           
           options['url'] = articleCommentsURL;
           request(articleCommentsURL, function(error, response, body) {
