@@ -13,11 +13,11 @@ class App extends Component {
     super(props);
 
     this.state = {
-      c_ids: [],
       links: [],
       after: '',
-      nextAfter: '',
-      currSearchText: 'all'
+      searchText: 'all',
+      searchTime: '',
+      nextAfter: ''
     }
 
     this.clearLinks = this.clearLinks.bind(this);
@@ -33,45 +33,48 @@ class App extends Component {
     this.setState({links: [], after: '', nextAfter: ''});
   }
 
-  search(searchText, newAfter) {
-    const { after, nextAfter } = this.state;
+  search(newSearchText, searchTime, newAfter) {
+    const { searchText, after, nextAfter } = this.state;
 
-    if (newAfter === '') newAfter = nextAfter;
+    if (newAfter === '' && newSearchText === searchText) newAfter = nextAfter;
     if (newAfter === after && after !== '') return;
 
-    let searchData = {text: searchText, after: newAfter};
-    this.setState({after: newAfter});
-    this.setState({currSearchText: searchText});
+    let searchData = {text: newSearchText, searchTime: searchTime, after: newAfter};
 
     socket.emit('search', searchData);
-    console.log('just emitted', searchData);
+
     document.getElementById('loadingText').style.display = '';
+
+    this.setState({after: newAfter});
+    this.setState({searchText: newSearchText});
+    this.setState({searchTime: searchTime});
   }
 
   handleSearchResponse(newLinks) {
-    const { c_ids, links } = this.state;
+    const { searchText, searchTime, links } = this.state;
 
     document.getElementById('loadingText').style.display = 'none';
 
     newLinks.forEach(function(link) {
-      if(!c_ids.includes(link.c_id)) { 
-        c_ids.push(link.c_id);
-        links.push(link);
-      }
+
+      if (link.searchText !== searchText) return;
+      if (link.searchTime !== searchTime) return;
+
+      links.push(link);
     });
     
-    this.setState({links: links, c_ids: c_ids});
+    this.setState({links: links});
   }
 
-  handleSearchResponseAfter(after) {
-    const { currSearchText } = this.state;
-    
+  handleSearchResponseAfter(newAfter) {
+    const { searchText, searchTime, after, nextAfter } = this.state;
+
     // Set pagination - if the current page isn't filled call for next page now
     if (document.body.scrollHeight <= document.body.clientHeight) {
-      this.search(currSearchText, after);
+      // this.search(searchText, searchTime, newAfter);
     }
 
-    this.setState({nextAfter: after});
+    this.setState({nextAfter: newAfter});
   }
 
   //below taken from http://www.howtocreate.co.uk/tutorials/javascript/browserwindow
@@ -104,21 +107,16 @@ class App extends Component {
   }
 
   onImgLoadFailed(event) {
-    const { links, c_ids } = this.state;
+    const { links } = this.state;
 
-    let c_id = event.target.getAttribute('data-cid');
     let failedURL = event.target.src.replace(/webm/i, 'gifv');
 
-    // Filter the failed url out of links and c_ids
+    // Filter the failed url out of links
     let linksUpdated = links.filter(function(link){
       return (link.url !== failedURL);
     });
 
-    let c_idsUpdated = c_ids.filter(function(currCID) {
-      return (currCID !== c_id);
-    });
-
-    this.setState({links: linksUpdated, c_ids: c_idsUpdated});
+    this.setState({ links: linksUpdated });
   }
 
   onImgLoad(event) {
@@ -152,9 +150,11 @@ class App extends Component {
   }
 
   componentDidMount() {
+    // const { searchText, searchTime, nextAfter } = this.state;
+
     document.addEventListener("scroll", function(event) {
       if ( Math.round(this.getDocHeight() - 450) <= this.getScrollXY()[1] + window.innerHeight) {
-        this.search(this.state.currSearchText, '');
+        // this.search(searchText, searchTime, nextAfter);
       }
     }.bind(this));
 
@@ -165,26 +165,26 @@ class App extends Component {
   render() {
     const { links } = this.state;
     const imgStyle = {
-      'pointerEvents': 'none'
+      // 'pointerEvents': 'none'
     };
 
     const linkRows = [];
     links.forEach(function(link, index) {
       let imgDivStyle = {
-
+// 
       };
 
       let type = link.url.includes('gifv') ? 'gifv' : 'gif';
       if (type === 'gifv'){
         let newURL = link.url.replace(/gifv/i, 'webm');
         linkRows.push(
-          <div className="linkDivChild" key={link.c_id} style={imgDivStyle}>
+          <div className="linkDivChild" key={link.c_id+'-'+link.url} style={imgDivStyle}>
             <video src={newURL} type="video/webm" onError={this.onImgLoadFailed} data-cid={link.c_id} onLoadedMetadata={this.onImgLoad} style={imgStyle} autoPlay="true" loop="loop"/>
           </div>
         );
       } else {
         linkRows.push(
-          <div className="linkDivChild" key={link.c_id} style={imgDivStyle}>
+          <div className="linkDivChild" key={link.c_id+'-'+link.url} style={imgDivStyle}>
             <img data-cid={link.c_id} onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
           </div>
         );
@@ -197,9 +197,7 @@ class App extends Component {
 
     return (
       <div id="AppWrapper" className="App">
-        <div className="ui center aligned container">
-          <Search search={this.search} searchText={this.currSearchText} clearLinks={this.clearLinks}/>
-        </div>
+        <Search search={this.search} searchText={this.searchText} clearLinks={this.clearLinks}/>
         <div className='masonryDiv'>
           <Masonry
             className={'linkDiv'}

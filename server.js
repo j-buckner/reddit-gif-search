@@ -54,11 +54,10 @@ MongoClient.connect('mongodb://heroku_p4kv17tq:s268pk2ssbk5hd3v3m5175nkfg@ds1490
 });
 
 io.on('connection', function(socket){
-  console.log('oooooo');
   socket.on('search', function(searchData){
-    console.log('received search', searchData);
     let searchText = searchData.text;
-    let searchAfter = searchData.after; 
+    let searchTime = searchData.searchTime;
+    let searchAfter = searchData.after;
     if (searchText === '') {
       db.collection('links').find().limit( 25 ).toArray(function(err, results) {
         socket.emit('search-response', results);
@@ -71,8 +70,10 @@ io.on('connection', function(socket){
         }
       };
 
-      let subURLFormatted = `https://reddit.com/r/${searchText}/top.json?sort=top&t=year`;
+      let subURLFormatted = `https://reddit.com/r/${searchText}/top.json?sort=top`;
       subURLFormatted = (searchAfter === '') ? subURLFormatted : subURLFormatted + `&after=${searchAfter}`;
+      subURLFormatted = (searchTime === '') ? subURLFormatted : subURLFormatted + `&t=${searchTime}`;
+
       options['url'] = subURLFormatted;
       request(options, function(error, response, body) {
 
@@ -89,10 +90,9 @@ io.on('connection', function(socket){
 
         let data = bodyJSON.data.children;
         let articleIDs = data.map(function(article) { return article.data.id; });
-        // console.log("Making this many requests: ", articleIDs.length);
         articleIDs.forEach(function(article) {
 
-          var articleCommentsURL = `https://reddit.com/r/${searchText}/comments/${article}.json?sort=top&t=year`;
+          var articleCommentsURL = `https://reddit.com/r/${searchText}/comments/${article}.json?sort=top`;
           
           options['url'] = articleCommentsURL;
           request(articleCommentsURL, function(error, response, body) {
@@ -123,6 +123,9 @@ io.on('connection', function(socket){
 
                   let linkDataElement = {
                     c_id: commentData.data.id,
+                    searchText: searchText,
+                    searchAfter: searchAfter,
+                    searchTime: searchTime,
                     url: url,
                     sub: commentData.data.subreddit
                   }
@@ -136,23 +139,16 @@ io.on('connection', function(socket){
               return commentLinkData;
             });
 
-            var commentLinkData = [].concat.apply([], commentLinkData);
-            var commentLinkData = commentLinkData.filter(function(data) {
-              return (data.length > 0);
-            });
-
+            var commentLinkData = [].concat.apply([], commentLinkData).filter(function(data) { return (data.length > 0); });
+            if (commentLinkData.length === 0) return;
+            
             var linkData = [];
-            for (let data of commentLinkData) {                  
-              if (data.length === 1) linkData.push(data[0]);
+            for (let data of commentLinkData) {
               data.forEach(function(dataElement) {
                 linkData.push(dataElement);
               });
             }
 
-            if (linkData.length === 0) {
-              return;
-            }
-            console.log('sending back data');
             socket.emit('search-response', linkData);
 
           });
