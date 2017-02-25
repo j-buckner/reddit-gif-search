@@ -148,7 +148,6 @@ class App extends Component {
       event.target.height = targetHeight;
     }
 
-    // event.target.style.margin = '-2px 2px -2px 2px';
     event.target.style.display = '';
   }
 
@@ -168,11 +167,6 @@ class App extends Component {
     const imgStyle = {
       'pointerEvents': 'none'
     };
-
-    // const imgDivStyle = {
-    //   'display': 'inline-block',
-    //   'vertical-align': 'top'
-    // };
 
     const linkRows = [];
     links.forEach(function(link, index) {
@@ -203,16 +197,18 @@ class App extends Component {
 
     return (
       <div id="AppWrapper" className="App">
-        <div className="SearchDiv">
+        <div className="ui center aligned container">
           <Search search={this.search} searchText={this.currSearchText} clearLinks={this.clearLinks}/>
         </div>
-        <Masonry
-          className={'linkDiv'}
-          disableImagesLoaded={false} // default false
-          updateOnEachImageLoad={false} // default false and works only if disableImagesLoaded is false
-        >
-          {linkRows}
-        </Masonry>
+        <div className='masonryDiv'>
+          <Masonry
+            className={'linkDiv'}
+            disableImagesLoaded={false} // default false
+            updateOnEachImageLoad={false} // default false and works only if disableImagesLoaded is false
+          >
+            {linkRows}
+          </Masonry>
+        </div>
         <div className="flex three">
           <div><span></span></div>
           <h4 id="loadingText" style={loadingStyle}>Loading...</h4>

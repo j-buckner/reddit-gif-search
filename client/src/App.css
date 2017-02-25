@@ -4,10 +4,6 @@
   height: 100%;
 }
 
-#submitSearch {
-  margin: 0;
-}
-
 h4 {
   animation-duration: 3s;
   transition-timing-function: ease;
@@ -29,15 +25,16 @@ h4 {
 }
 
 .linkDivChild {
-  margin: 5px;
+  margin: 2px;
 }
 
-.linkDiv {
-      box-sizing: border-box;
-    display: flex;
-    flex-flow: row wrap;
-    font-size: 0;
-    margin-right: auto;
-    margin-left: auto;
-    width: 90%;
+.masonryDiv {
+  margin-left: 40px;
+  margin-right: 40px;
+  margin-top: 2px;
+}
+
+#searchContainer {
+  margin-top: 5px;
+  width: 35%;
 }

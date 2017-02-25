@@ -57,32 +57,25 @@ class Search extends Component {
     var searchInput = document.getElementById('searchInput');
     var submitSearch = document.getElementById('submitSearch');
     searchInput.addEventListener("keydown", function (e) {
-        if (e.keyCode === 13) {  //checks whether the pressed key is "Enter"
-          submitSearch.click();
-          submitSearch.focus();
-          setTimeout(function() {
-            submitSearch.blur();
-          }, 700);
-          submitSearch.click();
-        }
+      if (e.keyCode === 13) {  //checks whether the pressed key is "Enter"
+        submitSearch.click();
+        submitSearch.focus();
+        setTimeout(function() {
+          submitSearch.blur();
+        }, 700);
+        submitSearch.click();
+      }
     });
   }
 
   render() {
     return (
-      <div className="flex three">
-        <div><span></span></div>
-        <div>
-          <h2>Search Reddit for Gifs</h2>
+      <div id="searchContainer" className="ui labeled action big input">
+        <div className="ui label">
+          /r/
         </div>
-        <div className="off fourth"><span></span></div>
-        <div><span></span></div>
-        <div>
-          <input id="searchInput" value={this.props.searchText} onChange={this.searchTextChanged} />
-        </div>
-        <div>
-          <input id="submitSearch" value="Search" onClick={this.handleSearch} type="submit" />
-        </div>
+        <input id="searchInput" value={this.props.searchText} onChange={this.searchTextChanged} type="text" />
+        <button id="submitSearch" onClick={this.handleSearch} className="ui primary button">Search</button>
       </div>
     );
   }
