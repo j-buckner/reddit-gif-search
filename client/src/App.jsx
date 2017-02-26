@@ -143,7 +143,7 @@ class App extends Component {
 
     let aspectRatio = imgWidth / imgHeight;
 
-    let targetWidth = 415;
+    let targetWidth = 430;
     let targetHeight = targetWidth / aspectRatio;
 
     if (event.target.videoWidth && event.target.videoHeight) {
@@ -153,8 +153,6 @@ class App extends Component {
       event.target.width = targetWidth;
       event.target.height = targetHeight;
     }
-
-    event.target.style.display = '';
   }
 
   componentDidMount() {
@@ -172,27 +170,25 @@ class App extends Component {
 
   render() {
     const { links } = this.state;
+
     const imgStyle = {
-      // 'pointerEvents': 'none'
-    };
+      'marginBottom': '-5px'
+    }
 
     const linkRows = [];
     links.forEach(function(link, index) {
-      let imgDivStyle = {
-// 
-      };
 
       let type = link.url.includes('gifv') ? 'gifv' : 'gif';
       if (type === 'gifv'){
         let newURL = link.url.replace(/gifv/i, 'webm');
         linkRows.push(
-          <div className="linkDivChild" key={link.c_id+'-'+link.url} style={imgDivStyle}>
+          <div className="linkDivChild" key={link.c_id+'-'+link.url}>
             <video src={newURL} type="video/webm" onError={this.onImgLoadFailed} data-cid={link.c_id} onLoadedMetadata={this.onImgLoad} style={imgStyle} autoPlay="true" loop="loop"/>
           </div>
         );
       } else {
         linkRows.push(
-          <div className="linkDivChild" key={link.c_id+'-'+link.url} style={imgDivStyle}>
+          <div className="linkDivChild" key={link.c_id+'-'+link.url}>
             <img data-cid={link.c_id} onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
           </div>
         );
@@ -205,16 +201,12 @@ class App extends Component {
 
     return (
       <div id="AppWrapper" className="App">
-        <Search search={this.search} searchText={this.searchText} clearLinks={this.clearLinks}/>
-        <div className='masonryDiv'>
-          <Masonry
-            className={'linkDiv'}
-            disableImagesLoaded={false} // default false
-            updateOnEachImageLoad={false} // default false and works only if disableImagesLoaded is false
-          >
-            {linkRows}
-          </Masonry>
-        </div>
+        <div id="TopBar">
+          <Search search={this.search} searchText={this.searchText} clearLinks={this.clearLinks}/>
+        </div>    
+        <Masonry className={"linkDiv"} options={{fitWidth: true, itemSelector: '.linkDivChild', gutter: 0, transitionDuration: '0.8s'}}>
+          {linkRows}
+        </Masonry>
         <div className="flex three">
           <div><span></span></div>
           <h3 id="loadingText" style={loadingStyle}>Loading...</h3>

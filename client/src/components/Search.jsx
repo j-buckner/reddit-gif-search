@@ -97,8 +97,8 @@ class Search extends Component {
     return (
       <Grid verticalAlign='bottom' columns={2}>
         <Grid.Row columns={2}>
-          <Grid.Column width={6}>
-            <Dropdown onChange={this.handleTimeSortChange} placeholder='Show Links From' selection options={sortTimeOptions} style={{float: 'right'}}/>
+          <Grid.Column width={7}>
+            <Dropdown onChange={this.handleTimeSortChange} placeholder='Show Links From' selection options={sortTimeOptions} style={{float: 'right', width: '20px'}}/>
           </Grid.Column>
           <Grid.Column >  
             <div id="searchContainer" className="ui labeled action big input">

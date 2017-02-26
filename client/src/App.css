@@ -10,6 +10,7 @@ h3 {
   animation-name: slidein;
   animation-iteration-count: infinite;
   animation-direction: alternate;
+  color: white;
 }
 
 @keyframes slidein {
@@ -25,15 +26,21 @@ h3 {
 }
 
 .linkDivChild {
-  margin: 2px;
+  
+  border-width: thin;
+  border-style: solid;
+  border-color: white;
 }
 
-.masonryDiv {
-  margin-left: 40px;
-  margin-right: 40px;
-  margin-top: 2px;
+.linkDiv {
+  margin: 0 auto;
 }
 
 #searchContainer {
   width: 35%;
+}
+
+#TopBar {
+  margin-top: 15px;
+  margin-bottom: 15px;
 }
