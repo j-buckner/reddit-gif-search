@@ -15,9 +15,9 @@ class App extends Component {
     this.state = {
       links: [],
       after: '',
+      nextAfter: '',
       searchText: 'all',
-      searchTime: '',
-      nextAfter: ''
+      searchTime: ''
     }
 
     this.clearLinks = this.clearLinks.bind(this);
@@ -33,27 +33,25 @@ class App extends Component {
     this.setState({links: [], after: '', nextAfter: ''});
   }
 
-  search(newSearchText, searchTime, newAfter) {
-    const { searchText, after, nextAfter } = this.state;
+  search(newSearchText, newSearchTime, newAfter) {
+    const { searchText, searchTime, after, nextAfter } = this.state;
 
-    if (newAfter === '' && newSearchText === searchText) newAfter = nextAfter;
+    if (newAfter === '' && newSearchText === searchText && newSearchTime === searchTime) newAfter = nextAfter;
     if (newAfter === after && after !== '') return;
 
-    let searchData = {text: newSearchText, searchTime: searchTime, after: newAfter};
+    let searchData = {text: newSearchText, searchTime: newSearchTime, after: newAfter};
 
     socket.emit('search', searchData);
 
-    document.getElementById('loadingText').style.display = '';
-
     this.setState({after: newAfter});
     this.setState({searchText: newSearchText});
-    this.setState({searchTime: searchTime});
+    this.setState({searchTime: newSearchTime});
+
+    document.getElementById('loadingText').style.display = '';
   }
 
   handleSearchResponse(newLinks) {
     const { searchText, searchTime, links } = this.state;
-
-    document.getElementById('loadingText').style.display = 'none';
 
     newLinks.forEach((newLink) => {
 
@@ -61,8 +59,9 @@ class App extends Component {
       if (newLink.searchTime !== searchTime) return;
 
       // Don't let duplicates through
-      if (links.findIndex((link) => { console.log(link, newLink); return link.url === newLink.url; }) !== -1) return;
+      if (links.findIndex((link) => { return link.url === newLink.url; }) !== -1) return;
 
+      document.getElementById('loadingText').style.display = 'none';
       links.push(newLink);
     });
     
@@ -70,11 +69,12 @@ class App extends Component {
   }
 
   handleSearchResponseAfter(newAfter) {
-    const { searchText, searchTime, after, nextAfter } = this.state;
+    const { links, searchText, searchTime } = this.state;
 
     // Set pagination - if the current page isn't filled call for next page now
-    if (document.body.scrollHeight <= document.body.clientHeight) {
-      // this.search(searchText, searchTime, newAfter);
+    if (links.length === 0) {
+      this.search(searchText, searchTime, newAfter);
+      return;
     }
 
     this.setState({nextAfter: newAfter});

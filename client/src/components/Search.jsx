@@ -8,7 +8,7 @@ const sortTimeOptions = [
   {text: 'past hour', value: 'hour'}, 
   {text: 'past 24 hours', value: 'day'},
   {text: 'past week', value: 'week'},
-  {text: 'past week', value: 'month'},
+  {text: 'past month', value: 'month'},
   {text: 'past year', value: 'year'},
   {text: 'all time', value: 'all'}
 ];
@@ -39,7 +39,14 @@ class Search extends Component {
   }
 
   handleTimeSortChange(e, data) {
-    this.setState({searchTime: data.value});
+    const { searchText } = this.state;
+    const newSearchTime = data.value;
+
+    // should probably detect if no change happened
+
+    this.setState({searchTime: newSearchTime});
+    this.props.clearLinks();
+    this.props.search(searchText, newSearchTime, '');
   }
 
   animateText(letterIndex) {
