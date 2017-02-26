@@ -40,7 +40,6 @@ class App extends Component {
     if (newAfter === after && after !== '') return;
 
     let searchData = {text: newSearchText, searchTime: newSearchTime, after: newAfter};
-
     socket.emit('search', searchData);
 
     this.setState({after: newAfter});
@@ -68,14 +67,20 @@ class App extends Component {
     this.setState({links: links});
   }
 
-  handleSearchResponseAfter(newAfter) {
+  handleSearchResponseAfter(afterData) {
     const { links, searchText, searchTime } = this.state;
 
+    let newAfter = afterData.nextAfter;
+    if (afterData.searchText !== searchText) return;
+    if (afterData.searchTime !== searchTime) return;
+
     // Set pagination - if the current page isn't filled call for next page now
-    if (links.length === 0) {
+    if (links.length < 10) {
       this.search(searchText, searchTime, newAfter);
       return;
     }
+
+    // document.body.scrollHeight <= document.body.clientHeight
 
     this.setState({nextAfter: newAfter});
   }
@@ -153,11 +158,11 @@ class App extends Component {
   }
 
   componentDidMount() {
-    // const { searchText, searchTime, nextAfter } = this.state;
+    const { searchText, searchTime, nextAfter } = this.state;
 
     document.addEventListener("scroll", function(event) {
       if ( Math.round(this.getDocHeight() - 450) <= this.getScrollXY()[1] + window.innerHeight) {
-        // this.search(searchText, searchTime, nextAfter);
+        this.search(searchText, searchTime, nextAfter);
       }
     }.bind(this));
 
@@ -212,7 +217,7 @@ class App extends Component {
         </div>
         <div className="flex three">
           <div><span></span></div>
-          <h4 id="loadingText" style={loadingStyle}>Loading...</h4>
+          <h3 id="loadingText" style={loadingStyle}>Loading...</h3>
           <div><span></span></div>
         </div>
       </div>

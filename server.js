@@ -86,7 +86,9 @@ io.on('connection', function(socket){
         }
 
         let bodyJSON = JSON.parse(body);
-        if (bodyJSON.data.after) socket.emit('search-after', bodyJSON.data.after) ;
+        if (bodyJSON.data.after) {
+          socket.emit('search-after', {nextAfter: bodyJSON.data.after, prevAfter: searchAfter, searchText: searchText, searchTime: searchTime});
+        }
 
         let data = bodyJSON.data.children;
         let articleIDs = data.map(function(article) { return article.data.id; });
@@ -96,7 +98,6 @@ io.on('connection', function(socket){
           
           options['url'] = articleCommentsURL;
           request(articleCommentsURL, function(error, response, body) {
-
             try {
               var data = JSON.parse(body);
               var comments = data.map(function(comment) { 
