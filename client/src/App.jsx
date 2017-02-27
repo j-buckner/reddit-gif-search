@@ -5,6 +5,8 @@ import '../node_modules/react-resizable/css/styles.css';
 import '../node_modules/react-grid-layout/css/styles.css';
 import Masonry from 'react-masonry-component';
 
+var ClipboardButton = require('react-clipboard.js');
+
 const io = require('socket.io-client');
 const socket = io.connect('/');
 
@@ -40,6 +42,7 @@ class App extends Component {
     if (newAfter === after && after !== '') return;
 
     let searchData = {text: newSearchText, searchTime: newSearchTime, after: newAfter};
+
     socket.emit('search', searchData);
 
     this.setState({after: newAfter});
@@ -155,6 +158,30 @@ class App extends Component {
     }
   }
 
+  handleCopyUrl(e) {    
+    console.log(e.trigger.parentElement.parentElement.childNodes[0]);
+    console.log(e);
+
+    e.trigger.parentElement.parentElement.childNodes[0].style.height = '20px';
+    e.trigger.parentElement.parentElement.childNodes[0].style.bottom = '91%';
+    setTimeout(
+    function() {
+      e.trigger.parentElement.parentElement.childNodes[0].style.height = '0px';
+      e.trigger.parentElement.parentElement.childNodes[0].style.bottom = '100%';
+    }, 2000);
+    // var id = setInterval(function() {
+    //   /* show the current frame */
+    //   let px = '40px';
+    //   let height = e.trigger.parentElement.parentElement.childNodes[0].style.height;
+    //   if (height === 0) {
+    //     e.trigger.parentElement.parentElement.childNodes[0].style.height = '40px';
+    //   }
+    //   e.trigger.parentElement.parentElement.childNodes[0].style.height = '40px';
+    //   if (/* finished */) clearInterval(id)        
+    // }, 10)
+
+  }
+
   componentDidMount() {
     const { searchText, searchTime, nextAfter } = this.state;
 
@@ -172,7 +199,8 @@ class App extends Component {
     const { links } = this.state;
 
     const imgStyle = {
-      'marginBottom': '-5px'
+      'marginBottom': '-5px',
+      'display': 'block'
     }
 
     const linkRows = [];
@@ -183,13 +211,17 @@ class App extends Component {
         let newURL = link.url.replace(/gifv/i, 'webm');
         linkRows.push(
           <div className="linkDivChild" key={link.c_id+'-'+link.url}>
+            <div className="copySuccessOverlay"><div className="copySuccessText">Copied!</div></div>
             <video src={newURL} type="video/webm" onError={this.onImgLoadFailed} data-cid={link.c_id} onLoadedMetadata={this.onImgLoad} style={imgStyle} autoPlay="true" loop="loop"/>
+            <div className="imgOverlay"><ClipboardButton onSuccess={this.handleCopyUrl} data-clipboard-text={link.url} className="copyUrl">Copy Url</ClipboardButton></div>
           </div>
         );
       } else {
         linkRows.push(
           <div className="linkDivChild" key={link.c_id+'-'+link.url}>
+            <div className="copySuccessOverlay"><div className="copySuccessText">Copied!</div></div>
             <img data-cid={link.c_id} onLoad={this.onImgLoad} style={imgStyle} onError={this.onImgLoadFailed} src={link.url} alt=":("/>
+            <div className="imgOverlay"><ClipboardButton onSuccess={this.handleCopyUrl} data-clipboard-text={link.url} className="copyUrl">Copy Url</ClipboardButton></div>
           </div>
         );
       }

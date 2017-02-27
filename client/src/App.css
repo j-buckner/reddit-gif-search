@@ -25,15 +25,80 @@ h3 {
   }
 }
 
+.linkDiv {
+  margin: 0 auto;
+}
+
 .linkDivChild {
-  
+  position: relative;
   border-width: thin;
   border-style: solid;
   border-color: white;
 }
 
-.linkDiv {
+.imgOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: transparent;
+  overflow: hidden;
+  width: 100%;
+  height: 0;
+  transition: .5s ease;
+  width: 100%;
+}
+
+.linkDivChild:hover .imgOverlay {
+  height: 50px;
+}
+
+.copyUrl {
+  background:none;
+  border:none;
+  position: absolute;
+  top: 10%;
+  margin-left: 10px;
+  margin-top: -50%; 
+  color: white;
+  display:block;
+  width:100px;
+  height: 100%;
   margin: 0 auto;
+}
+
+.copyUrl {
+  background:none!important;
+  border:none; 
+  outline:none;
+  padding:0!important;
+  cursor:pointer;
+}
+
+.copySuccessOverlay {
+  position: absolute;
+  bottom: 100%;
+  left: 5px;
+  background-color: transparent;
+  overflow: hidden;
+  width: 20%;
+  height: 0px;
+  transition: .5s ease-in-out;
+  border-bottom: 1px solid white;
+  border-right: 1px solid white; 
+  border-left: 1px solid white;
+}
+
+.copySuccessText {
+  white-space: nowrap; 
+  color: white;
+  font-size: 15px;
+  height: 20px;
+  text-align: center;
+  position: absolute;
+  overflow: hidden;
+  top: 0;
+  left: 18%;
 }
 
 #searchContainer {

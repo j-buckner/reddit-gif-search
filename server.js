@@ -70,7 +70,7 @@ io.on('connection', function(socket){
         }
       };
 
-      let subURLFormatted = `https://reddit.com/r/${searchText}/top.json?sort=top`;
+      let subURLFormatted = `https://reddit.com/r/${searchText}/top.json?limit=None&sort=top`;
       subURLFormatted = (searchAfter === '') ? subURLFormatted : subURLFormatted + `&after=${searchAfter}`;
       subURLFormatted = (searchTime === '') ? subURLFormatted : subURLFormatted + `&t=${searchTime}`;
 
@@ -88,6 +88,8 @@ io.on('connection', function(socket){
         let bodyJSON = JSON.parse(body);
         if (bodyJSON.data.after) {
           socket.emit('search-after', {nextAfter: bodyJSON.data.after, prevAfter: searchAfter, searchText: searchText, searchTime: searchTime});
+        } else {
+          console.log('test: ', bodyJSON.data);
         }
 
         let data = bodyJSON.data.children;
@@ -105,7 +107,7 @@ io.on('connection', function(socket){
               });
 
             } catch (e) {
-              return console.log('Error getting comments in article: ', articleCommentsURL);
+              return console.log('Error getting comments in article: ', articleCommentsURL, e);
             }
 
             var commentLinkData =  comments.map(function(comment) {
