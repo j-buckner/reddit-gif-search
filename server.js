@@ -70,7 +70,7 @@ io.on('connection', function(socket){
         }
       };
 
-      let subURLFormatted = `https://reddit.com/r/${searchText}/top.json?limit=None&sort=top`;
+      let subURLFormatted = `https://reddit.com/r/${searchText}/top.json?limit=None&sort=top&obey_over18=true`;
       subURLFormatted = (searchAfter === '') ? subURLFormatted : subURLFormatted + `&after=${searchAfter}`;
       subURLFormatted = (searchTime === '') ? subURLFormatted : subURLFormatted + `&t=${searchTime}`;
 

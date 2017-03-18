@@ -159,9 +159,6 @@ class App extends Component {
   }
 
   handleCopyUrl(e) {    
-    console.log(e.trigger.parentElement.parentElement.childNodes[0]);
-    console.log(e);
-
     e.trigger.parentElement.parentElement.childNodes[0].style.height = '20px';
     e.trigger.parentElement.parentElement.childNodes[0].style.bottom = '91%';
     setTimeout(
@@ -169,17 +166,6 @@ class App extends Component {
       e.trigger.parentElement.parentElement.childNodes[0].style.height = '0px';
       e.trigger.parentElement.parentElement.childNodes[0].style.bottom = '100%';
     }, 2000);
-    // var id = setInterval(function() {
-    //   /* show the current frame */
-    //   let px = '40px';
-    //   let height = e.trigger.parentElement.parentElement.childNodes[0].style.height;
-    //   if (height === 0) {
-    //     e.trigger.parentElement.parentElement.childNodes[0].style.height = '40px';
-    //   }
-    //   e.trigger.parentElement.parentElement.childNodes[0].style.height = '40px';
-    //   if (/* finished */) clearInterval(id)        
-    // }, 10)
-
   }
 
   componentDidMount() {
@@ -212,7 +198,7 @@ class App extends Component {
         linkRows.push(
           <div className="linkDivChild" key={link.c_id+'-'+link.url}>
             <div className="copySuccessOverlay"><div className="copySuccessText">Copied!</div></div>
-            <video src={newURL} type="video/webm" onError={this.onImgLoadFailed} data-cid={link.c_id} onLoadedMetadata={this.onImgLoad} style={imgStyle} autoPlay="true" loop="loop"/>
+            <video src={newURL} style={imgStyle} type="video/webm" onError={this.onImgLoadFailed} data-cid={link.c_id} onLoadedMetadata={this.onImgLoad} autoPlay="true" loop="loop"/>
             <div className="imgOverlay"><ClipboardButton onSuccess={this.handleCopyUrl} data-clipboard-text={link.url} className="copyUrl">Copy Url</ClipboardButton></div>
           </div>
         );
