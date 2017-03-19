@@ -158,13 +158,19 @@ class App extends Component {
     }
   }
 
-  handleCopyUrl(e) {    
-    e.trigger.parentElement.parentElement.childNodes[0].style.height = '20px';
-    e.trigger.parentElement.parentElement.childNodes[0].style.bottom = '91%';
-    setTimeout(
-    function() {
-      e.trigger.parentElement.parentElement.childNodes[0].style.height = '0px';
-      e.trigger.parentElement.parentElement.childNodes[0].style.bottom = '100%';
+  handleCopyUrl(e) {
+    let containerElement = e.trigger.parentElement.parentElement;
+    let successBanner = containerElement.childNodes[0];
+    
+    // TODO: Optimize this so it looks good for all aspect ratios
+    let height = containerElement.clientHeight - (containerElement.clientHeight * (0.90));
+    
+    successBanner.style.height = height + 'px';
+    successBanner.style.bottom = '90%';
+
+    setTimeout(function() {
+      successBanner.style.height = '0px';
+      successBanner.style.bottom = '100%';
     }, 2000);
   }
 
