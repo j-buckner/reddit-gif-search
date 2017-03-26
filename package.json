@@ -19,6 +19,7 @@
     "get-urls": "^7.0.0",
     "mongodb": "^2.2.22",
     "needle": "^1.4.3",
+    "pg-promise": "^5.6.4",
     "randomstring": "^1.1.5",
     "socket.io": "^1.7.2",
     "socket.io-client": "^1.7.2"

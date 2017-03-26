@@ -2,24 +2,30 @@
 var async = require('async');
 var request = require('request');
 var getURLs = require('get-urls');
+var pgp = require('pg-promise')();
 
-const MongoClient = require('mongodb').MongoClient;
+var options = {
+  url: '',
+  headers: {
+    'User-Agent': 'web:5Ku4NNXMzh5atA:v0.0.1 (by /u/jare_)'
+  }
+};
 
-MongoClient.connect('mongodb://heroku_p4kv17tq:s268pk2ssbk5hd3v3m5175nkfg@ds149069.mlab.com:49069/heroku_p4kv17tq', (err, db) => {
-  if (err) return console.log(err)
-  getData(db);
-})
+var cn = {
+  host: 'ec2-174-129-223-193.compute-1.amazonaws.com',
+  port: 5432,
+  database: 'd4r48e9k3uo63l',
+  user: 'jyrhlnpsxpgtkx',
+  ssl: true,
+  password: 'df91fb0430b3eab1bea753a6078d0132aa39b5b720f5061922fd112d01c407e4'
+};
+
+var db = pgp(cn);
+getData(db);
 
 function getData(db) {
 
-  var options = {
-    url: '',
-    headers: {
-      'User-Agent': 'web:5Ku4NNXMzh5atA:v0.0.1 (by /u/jare_)'
-    }
-  };
-
-  options['url'] = 'https://www.reddit.com/subreddits/popular.json?limit=25';
+  options['url'] = 'https://www.reddit.com/subreddits/popular.json';
   request(options, function (error, response, body) {
     if (error) return console.log('Error getting subs: ', error);
     if (response.statusCode !== 200) return console.log('Error response getting subs');
@@ -27,115 +33,12 @@ function getData(db) {
     var bodyJSON = JSON.parse(body);
     var data = bodyJSON.data.children;
     var subData = data.map(function(sub) { return {url: sub.data.url, name: sub.data.display_name} });
+    
     async.each(subData, function(subDataElement, subCB) {
 
-      let subURL = subDataElement.url;
-      let subName = subDataElement.name;
-      let subURLFormatted = `https://reddit.com${subURL}.json?sort=top&t=week&limit=100`;
-      
-      options['url'] = subURLFormatted;
-      request(options, function(error, response, body) {
+      let subUrl = subDataElement.url;
+      getArticles(subUrl, '', subCB);
 
-        if (error) { 
-          subCB(); 
-          return console.log('Error getting articles in sub: ', error); 
-        }
-
-        if (response.statusCode !== 200) { 
-          subCB(); 
-          return console.log('Error response getting articles in sub: ', subURLFormatted); 
-        }
-
-        var bodyJSON = JSON.parse(body);
-        var data = bodyJSON.data.children;
-        var articleIDs = data.map(function(article) { return article.data.id; });
-        async.each(articleIDs, function(article, articleCB) {
-
-          var articleCommentsURL = `https://reddit.com${subURL}comments/${article}.json?sort=top&t=week&limit=100`;
-          
-          options['url'] = articleCommentsURL;
-          request(articleCommentsURL, function(error, response, body) {
-
-            try {
-              var data = JSON.parse(body);
-            } catch (e) {
-              articleCB();
-              return console.log('Error getting comments in article: ', articleCommentsURL);
-            }
-
-            var comments = data.map(function(comment) { 
-              return comment.data.children;
-            });
-
-            var commentLinkData =  comments.map(function(comment) {
-              var commentLinkData = comment.map(function(commentData) {
-                if (!commentData.data.body) return [];
-                var urls = getURLs(commentData.data.body);
-
-                if (!urls) return [];
-
-                var linkData = [];
-                for (let url of urls) {
-                  if (url.includes('reddit.com/r') || (!url.includes('.gif') && !url.includes('.gifv')) ) continue;
-                  if (url.charAt(url.length - 1) == ')') {
-                    url = url.slice(0, -1);
-                  }
-
-                  let linkDataElement = {
-                    c_id: commentData.data.id,
-                    url: url,
-                    sub: commentData.data.subreddit
-                  }
-
-                  linkData.push(linkDataElement);
-                }
-
-                return linkData;
-              });
-
-              return commentLinkData;
-            });
-
-            var commentLinkData = [].concat.apply([], commentLinkData);
-            var commentLinkData = commentLinkData.filter(function(data) {
-              return (data.length > 0);
-            });
-
-            var linkData = [];
-            for (let data of commentLinkData) {                  
-              if (data.length === 1) linkData.push(data[0]);
-              data.forEach(function(dataElement) {
-                linkData.push(dataElement);
-              });
-            }
-
-            if (linkData.length === 0) {
-              articleCB();
-              return;
-            }
-
-            async.each(linkData, function(linkObject, linkCB) {
-              db.collection('links').find({ c_id: linkObject.c_id }).toArray(function(err, results) {
-                if (results.length !== 0) {
-                  linkCB();
-                  return;
-                } 
-
-                db.collection('links').insertOne({
-                  "c_id": linkObject.c_id,
-                  "url": linkObject.url,
-                  "sub": linkObject.sub
-                }, function(err, results) {linkCB()});
-              });
-            }, function(err) {
-              articleCB();
-            });
-          });
-
-        }, function(err) {
-          subCB();
-        });
-      });
 
     }, function(err) {
         process.exit();
@@ -143,3 +46,139 @@ function getData(db) {
   });
 
 }
+
+function getArticles(subUrl, after, subCB) {
+
+  let baseUrl = `https://reddit.com${subUrl}.json?sort=top&t=day`;
+
+  options['url'] = (after !== '') ? baseUrl + `&after=${after}` : baseUrl;
+  request(options, function(error, response, body) {
+
+  if (error) { 
+    subCB(); 
+    return console.log('Error getting articles in sub: ', options['url'], error); 
+  }
+
+  if (response.statusCode !== 200) { 
+    subCB(); 
+    return console.log('Error response getting articles in sub: ', subUrl); 
+  }
+
+  var bodyJSON = JSON.parse(body);
+  var data = bodyJSON.data.children;
+
+  var after = bodyJSON.data.after ? bodyJSON.data.after : '';
+
+  var articleIDs = data.map(function(article) { return article.data.id; });
+  async.each(articleIDs, function(article, articleCB) {
+
+    var articleCommentsURL = `https://reddit.com${subUrl}comments/${article}.json?sort=top`;
+    
+    options['url'] = articleCommentsURL;
+    request(articleCommentsURL, function(error, response, body) {
+
+      try {
+        var data = JSON.parse(body);
+      } catch (e) {
+        articleCB();
+        return console.log('Error getting comments in article: ', body);
+      }
+
+      var comments = data.map(function(comment) { 
+        return comment.data.children;
+      });
+
+      var commentLinkData =  comments.map(function(comment) {
+        var commentLinkData = comment.map(function(commentData) {
+          if (!commentData.data.body) return [];
+          var urls = getURLs(commentData.data.body);
+
+          if (!urls) return [];
+
+          var linkData = [];
+          for (let url of urls) {
+            if (url.includes('reddit.com/r') || (!url.includes('.gif') && !url.includes('.gifv')) ) continue;
+            if (url.charAt(url.length - 1) == ')') {
+              url = url.slice(0, -1);
+            }
+
+            let linkDataElement = {
+              c_id: commentData.data.id,
+              url: url,
+              sub: commentData.data.subreddit,
+              score: commentData.data.score,
+              created: commentData.data.created_utc
+            }
+
+            linkData.push(linkDataElement);
+          }
+
+          return linkData;
+        });
+
+        return commentLinkData;
+      });
+
+      var commentLinkData = [].concat.apply([], commentLinkData);
+      var commentLinkData = commentLinkData.filter(function(data) {
+        return (data.length > 0);
+      });
+
+      var linkData = [];
+      for (let data of commentLinkData) {                  
+        if (data.length === 1) linkData.push(data[0]);
+        data.forEach(function(dataElement) {
+          linkData.push(dataElement);
+        });
+      }
+
+      if (linkData.length === 0) {
+        articleCB();
+        return;
+      }
+
+      async.each(linkData, function(linkObject, linkCB) {
+        db.any("select id from links where c_id=$1", [linkObject.c_id])
+          .then(data => {
+            if (data.length !== 0) {
+              linkCB();
+              return;
+            }
+
+            let insertVals = [
+              linkObject.c_id,
+              linkObject.url,
+              linkObject.sub,
+              linkObject.score,
+              new Date(linkObject.created * 1000)
+            ];
+
+            db.none("INSERT INTO links(c_id, url, sub, score, c_created, added) values($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)", insertVals)
+              .then(() => {
+                  console.log("inserted", linkObject.c_id);
+                  linkCB();
+              })
+              .catch(error => {
+                  console.log("error inserting link into db", error);
+                  linkCB();
+              });
+
+        })
+        .catch(error => {
+            console.log('error selecting id from links', error);
+            linkCB();
+        });
+
+      }, function(err) {
+        articleCB();
+      });
+    });
+
+  }, function(err) {
+    if (after === '') subCB();
+    getArticles(subUrl, after, subCB);
+  });
+});
+}
+
+
