@@ -8,7 +8,10 @@ var options = {
   url: '',
   headers: {
     'User-Agent': 'web:5Ku4NNXMzh5atA:v0.0.1 (by /u/jare_)'
-  }
+  },
+  pool: {
+    maxSockets: 100
+  },
 };
 
 var cn = {
@@ -81,7 +84,7 @@ function getArticles(subUrl, after, subCB) {
         var data = JSON.parse(body);
       } catch (e) {
         articleCB();
-        return console.log('Error getting comments in article: ', body);
+        return console.log('Error getting comments in article: ', e, articleCommentsURL);
       }
 
       var comments = data.map(function(comment) { 
