@@ -16,6 +16,7 @@ class App extends Component {
 
     this.state = {
       links: [],
+      linkCache: [],
       after: '',
       nextAfter: '',
       searchText: 'all',
@@ -26,6 +27,7 @@ class App extends Component {
     this.search = this.search.bind(this);
     this.handleSearchResponse = this.handleSearchResponse.bind(this);
     this.handleSearchResponseAfter = this.handleSearchResponseAfter.bind(this);
+    this.handleSearchDBResponse = this.handleSearchDBResponse.bind(this);
     this.onImgLoadFailed = this.onImgLoadFailed.bind(this);
     this.onImgLoad = this.onImgLoad.bind(this);
     this.componentDidMount = this.componentDidMount.bind(this);
@@ -35,21 +37,74 @@ class App extends Component {
     this.setState({links: [], after: '', nextAfter: ''});
   }
 
+  getLinksFromCache() {
+    console.log('here');
+    const { links, linkCache } = this.state;
+    if (links.length === 0) return;
+
+//     let index = links[links.length - 1].id;
+
+//     var fruits = ['Banana', 'Orange', 'Lemon', 'Apple', 'Mango'];
+// var citrus = fruits.slice(1, 3);
+
+// // fruits contains ['Banana', 'Orange', 'Lemon', 'Apple', 'Mango']
+// // citrus contains ['Orange','Lemon']
+    // console.log(links, linkCache);
+    // links = [...arr1, ...arr2]
+    // links.merge(linkCache.slice(links.length - 1, links.length + 24));
+
+    for(var i = links.length; i < links.length + 20; i++) {
+      if (links.findIndex((link) => { return link.id === linkCache[i].id; }) !== -1) return;
+
+      links.push(linkCache[i]);
+    }
+
+    
+    this.setState({links: links});
+
+  }
+
+  searchDB() {
+    let searchDBData = {after: 0};
+    socket.emit('search-db', searchDBData);
+  }
+
+  handleSearchDBResponse(newLinks) {
+    const { links } = this.state;
+
+    
+    newLinks.forEach((newLink) => {
+      
+        document.getElementById('loadingText').style.display = 'none';
+
+        // Don't let duplicates through
+        if (links.findIndex((link) => { return link.url === newLink.url; }) !== -1) return;
+
+        if (links.length > 25) return;
+
+        links.push(newLink);
+    });
+
+    this.setState({linkCache: newLinks, links: links});
+  }
+
   search(newSearchText, newSearchTime, newAfter) {
-    const { searchText, searchTime, after, nextAfter } = this.state;
+    return;
 
-    if (newAfter === '' && newSearchText === searchText && newSearchTime === searchTime) newAfter = nextAfter;
-    if (newAfter === after && after !== '') return;
+    // const { searchText, searchTime, after, nextAfter } = this.state;
 
-    let searchData = {text: newSearchText, searchTime: newSearchTime, after: newAfter};
+    // if (newAfter === '' && newSearchText === searchText && newSearchTime === searchTime) newAfter = nextAfter;
+    // if (newAfter === after && after !== '') return;
 
-    socket.emit('search', searchData);
+    // let searchData = {text: newSearchText, searchTime: newSearchTime, after: newAfter};
 
-    this.setState({after: newAfter});
-    this.setState({searchText: newSearchText});
-    this.setState({searchTime: newSearchTime});
+    // socket.emit('search', searchData);
 
-    document.getElementById('loadingText').style.display = '';
+    // this.setState({after: newAfter});
+    // this.setState({searchText: newSearchText});
+    // this.setState({searchTime: newSearchTime});
+
+    // document.getElementById('loadingText').style.display = '';
   }
 
   handleSearchResponse(newLinks) {
@@ -118,7 +173,7 @@ class App extends Component {
   }
 
   onImgLoadFailed(event) {
-    const { links } = this.state;
+    const { links, linkCache } = this.state;
 
     let failedURL = event.target.src.replace(/webm/i, 'gifv');
 
@@ -127,7 +182,11 @@ class App extends Component {
       return (link.url !== failedURL);
     });
 
-    this.setState({ links: linksUpdated });
+    let linkCacheUpdated = linkCache.filter(function(link){
+      return (link.url !== failedURL);
+    });
+
+    this.setState({ links: linksUpdated, linkCache: linkCacheUpdated });
   }
 
   onImgLoad(event) {
@@ -180,16 +239,20 @@ class App extends Component {
     document.addEventListener("scroll", function(event) {
       if ( Math.round(this.getDocHeight() - 450) <= this.getScrollXY()[1] + window.innerHeight) {
         this.search(searchText, searchTime, nextAfter);
+        this.getLinksFromCache();
       }
     }.bind(this));
 
+    this.searchDB();
+
     socket.on('search-response', this.handleSearchResponse);
+    socket.on('search-response-db', this.handleSearchDBResponse);
     socket.on('search-after', this.handleSearchResponseAfter);
   }
 
   render() {
     const { links } = this.state;
-
+    
     const imgStyle = {
       'marginBottom': '-5px',
       'display': 'block'
@@ -197,6 +260,7 @@ class App extends Component {
 
     const linkRows = [];
     links.forEach(function(link, index) {
+      if (!link.url) return;
 
       let type = link.url.includes('gifv') ? 'gifv' : 'gif';
       if (type === 'gifv'){

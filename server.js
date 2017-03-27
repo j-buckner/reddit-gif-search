@@ -7,6 +7,18 @@ var request = require('request');
 var randomstring = require('randomstring');
 var needle = require('needle');
 var getURLs = require('get-urls');
+var pgp = require('pg-promise')();
+
+var cn = {
+  host: 'ec2-174-129-223-193.compute-1.amazonaws.com',
+  port: 5432,
+  database: 'd4r48e9k3uo63l',
+  user: 'jyrhlnpsxpgtkx',
+  ssl: true,
+  password: 'df91fb0430b3eab1bea753a6078d0132aa39b5b720f5061922fd112d01c407e4'
+};
+
+var db = pgp(cn);
 
 
 app.set('port', (process.env.PORT || 3001));
@@ -42,16 +54,16 @@ app.get('/api/auth', (req, res) => {
   });
 });
 
-var db;
-MongoClient.connect('mongodb://heroku_p4kv17tq:s268pk2ssbk5hd3v3m5175nkfg@ds149069.mlab.com:49069/heroku_p4kv17tq', (err, database) => {
-  if (err) return console.log(err);
+// var db;
+// MongoClient.connect('mongodb://heroku_p4kv17tq:s268pk2ssbk5hd3v3m5175nkfg@ds149069.mlab.com:49069/heroku_p4kv17tq', (err, database) => {
+//   if (err) return console.log(err);
 
-  db = database;
-  server.listen(app.get('port'), () => {
-    console.log(`Find the server at: http://localhost:${app.get('port')}/`); // eslint-disable-line no-console
-  });
+//   db = database;
+//   server.listen(app.get('port'), () => {
+//     console.log(`Find the server at: http://localhost:${app.get('port')}/`); // eslint-disable-line no-console
+//   });
 
-});
+// });
 
 io.on('connection', function(socket){
   socket.on('search', function(searchData){
@@ -159,6 +171,20 @@ io.on('connection', function(socket){
       });
     }
   });
+
+  socket.on('search-db', function(searchDBData){
+    db.any(`select * from links where id >$1 order by score desc`, [searchDBData.after])
+      .then(data => {
+        socket.emit('search-response-db', data);
+      })
+      .catch(error => {
+          console.log('error selecting id from links', error);
+          linkCB();
+      });
+
+
+  });
+
 });
 
 server.listen(app.get('port'));

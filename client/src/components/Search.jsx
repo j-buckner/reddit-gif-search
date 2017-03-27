@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Grid, Dropdown } from 'semantic-ui-react'
 import '../App.css';
 
-const placeHolderText = 'all';
+// const placeHolderText = 'all';
 
 const sortTimeOptions = [
   {text: 'past hour', value: 'hour'}, 
@@ -50,47 +50,50 @@ class Search extends Component {
   }
 
   animateText(letterIndex) {
-    if (placeHolderText.length === letterIndex) {
-      let submitSearch = document.getElementById('submitSearch');
-      submitSearch.click();
-      submitSearch.focus();
-      setTimeout(function() {
-        submitSearch.blur();
-      }, 1000);
-      return;
-    } 
+    return;
+    // if (placeHolderText.length === letterIndex) {
+    //   let submitSearch = document.getElementById('submitSearch');
+    //   submitSearch.click();
+    //   submitSearch.focus();
+    //   setTimeout(function() {
+    //     submitSearch.blur();
+    //   }, 1000);
+    //   return;
+    // } 
 
-    setTimeout(function() {
-      window.requestAnimationFrame(function() {
-        this.animateText(letterIndex + 1);
-      }.bind(this));
-    }.bind(this), 450);
+    // setTimeout(function() {
+    //   window.requestAnimationFrame(function() {
+    //     this.animateText(letterIndex + 1);
+    //   }.bind(this));
+    // }.bind(this), 450);
 
-    let searchInput = document.getElementById('searchInput');
-    searchInput.value += placeHolderText[letterIndex];
+    // let searchInput = document.getElementById('searchInput');
+    // searchInput.value += placeHolderText[letterIndex];
   }
 
   componentDidMount() {
-    document.getElementById('searchInput').focus();
-    setTimeout(function() {
-      window.requestAnimationFrame(function() {
-        this.animateText(0);
-      }.bind(this));
-    }.bind(this), 450);
+    // document.getElementById('searchInput').focus();
+    // setTimeout(function() {
+    //   window.requestAnimationFrame(function() {
+    //     this.animateText(0);
+    //   }.bind(this));
+    // }.bind(this), 450);
 
-    var searchInput = document.getElementById('searchInput');
-    searchInput.addEventListener("keydown", function (e) {
-      if (e.keyCode === 13) {  //checks whether the pressed key is "Enter"
-        e.preventDefault();
+    // var searchInput = document.getElementById('searchInput');
+    // searchInput.addEventListener("keydown", function (e) {
+    //   if (e.keyCode === 13) {  //checks whether the pressed key is "Enter"
+    //     e.preventDefault();
 
-        let submitSearch = document.getElementById('submitSearch');
-        submitSearch.click();
-        submitSearch.focus();
-        setTimeout(function() {
-          submitSearch.blur();
-        }, 1000);
-      }
-    });
+    //     let submitSearch = document.getElementById('submitSearch');
+    //     submitSearch.click();
+    //     submitSearch.focus();
+    //     setTimeout(function() {
+    //       submitSearch.blur();
+    //     }, 1000);
+    //   }
+    // });
+
+    // this.props.
   }
 
   render() {
