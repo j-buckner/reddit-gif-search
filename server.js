@@ -173,7 +173,7 @@ io.on('connection', function(socket){
   });
 
   socket.on('search-db', function(searchDBData){
-    db.any(`select * from links where id >$1 order by score desc`, [searchDBData.after])
+    db.any(`SELECT * FROM links WHERE id>$1 AND size <  ORDER BY score DESC`, [searchDBData.after])
       .then(data => {
         socket.emit('search-response-db', data);
       })
@@ -181,8 +181,13 @@ io.on('connection', function(socket){
           console.log('error selecting id from links', error);
           linkCB();
       });
+  });
 
-
+  socket.on('failed-url', function(failedUrl) {
+    request(failedUrl, function (err, resp) {
+      // TODO: Update db
+      console.log('client side failed url: ', failedUrl, 'error: ', err, 'status code: ', resp.statusCode);
+    });
   });
 
 });

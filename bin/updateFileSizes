@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+var remote = require('remote-file-size');
+var pgp = require('pg-promise')();
+
+var cn = {
+  host: 'ec2-174-129-223-193.compute-1.amazonaws.com',
+  port: 5432,
+  database: 'd4r48e9k3uo63l',
+  user: 'jyrhlnpsxpgtkx',
+  ssl: true,
+  password: 'df91fb0430b3eab1bea753a6078d0132aa39b5b720f5061922fd112d01c407e4'
+};
+
+var db = pgp(cn);
+
+db.any(`SELECT * FROM links WHERE size IS NULL`)
+  .then(data => {
+    data.forEach( (link) => {
+      remote(link.url, function(err, fileSize) {
+        if (err) return;
+        db.any(`UPDATE links SET size = $1 WHERE id = $2`, [fileSize, link.id])
+          .then(rowUpdated => {
+            console.log("Updated id ", link.id, " with file size ", fileSize);
+          })
+          .catch(error => {
+            console.log("Error inserting file size for url", error, link);
+          })
+      });
+    });
+  })
+  .catch(error => {
+      console.log('error getting links from db', error);
+  });

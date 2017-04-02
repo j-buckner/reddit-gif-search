@@ -31,6 +31,7 @@ class App extends Component {
     this.onImgLoadFailed = this.onImgLoadFailed.bind(this);
     this.onImgLoad = this.onImgLoad.bind(this);
     this.componentDidMount = this.componentDidMount.bind(this);
+    this.handleLayoutComplete = this.handleLayoutComplete.bind(this);
   }
 
   clearLinks() {
@@ -38,30 +39,18 @@ class App extends Component {
   }
 
   getLinksFromCache() {
-    console.log('here');
     const { links, linkCache } = this.state;
     if (links.length === 0) return;
 
-//     let index = links[links.length - 1].id;
+    for (var i = links.length; i < links.length + 10; i++) {
 
-//     var fruits = ['Banana', 'Orange', 'Lemon', 'Apple', 'Mango'];
-// var citrus = fruits.slice(1, 3);
-
-// // fruits contains ['Banana', 'Orange', 'Lemon', 'Apple', 'Mango']
-// // citrus contains ['Orange','Lemon']
-    // console.log(links, linkCache);
-    // links = [...arr1, ...arr2]
-    // links.merge(linkCache.slice(links.length - 1, links.length + 24));
-
-    for(var i = links.length; i < links.length + 20; i++) {
+      // eslint-disable-next-line
       if (links.findIndex((link) => { return link.id === linkCache[i].id; }) !== -1) return;
 
       links.push(linkCache[i]);
     }
 
-    
     this.setState({links: links});
-
   }
 
   searchDB() {
@@ -80,7 +69,7 @@ class App extends Component {
         // Don't let duplicates through
         if (links.findIndex((link) => { return link.url === newLink.url; }) !== -1) return;
 
-        if (links.length > 25) return;
+        if (links.length > 12) return;
 
         links.push(newLink);
     });
@@ -173,20 +162,22 @@ class App extends Component {
   }
 
   onImgLoadFailed(event) {
-    const { links, linkCache } = this.state;
+    let { links, linkCache } = this.state;
 
-    let failedURL = event.target.src.replace(/webm/i, 'gifv');
+    let failedUrl = event.target.src.replace(/mp4/i, 'gifv');
 
     // Filter the failed url out of links
-    let linksUpdated = links.filter(function(link){
-      return (link.url !== failedURL);
+    links = links.filter(function(link){
+      return (link.url !== failedUrl);
     });
 
-    let linkCacheUpdated = linkCache.filter(function(link){
-      return (link.url !== failedURL);
+    linkCache = linkCache.filter(function(link){
+      return (link.url !== failedUrl);
     });
 
-    this.setState({ links: linksUpdated, linkCache: linkCacheUpdated });
+    this.setState({ links: links, linkCache: linkCache });
+
+    socket.emit('failed-url', failedUrl);
   }
 
   onImgLoad(event) {
@@ -233,6 +224,18 @@ class App extends Component {
     }, 2000);
   }
 
+  handleImagesLoaded(mediaLoaded) {
+    
+  }
+
+  handleLayoutComplete(laidOutItems) {
+    if (laidOutItems.length === 0) return;
+  }
+
+  handleRemoveComplete(removedItems) {
+    
+  }
+
   componentDidMount() {
     const { searchText, searchTime, nextAfter } = this.state;
 
@@ -252,7 +255,7 @@ class App extends Component {
 
   render() {
     const { links } = this.state;
-    
+    console.log('rendering');
     const imgStyle = {
       'marginBottom': '-5px',
       'display': 'block'
@@ -264,11 +267,11 @@ class App extends Component {
 
       let type = link.url.includes('gifv') ? 'gifv' : 'gif';
       if (type === 'gifv'){
-        let newURL = link.url.replace(/gifv/i, 'webm');
+        let newURL = link.url.replace(/gifv/i, 'mp4');
         linkRows.push(
           <div className="linkDivChild" key={link.c_id+'-'+link.url}>
             <div className="copySuccessOverlay"><div className="copySuccessText">Copied!</div></div>
-            <video src={newURL} style={imgStyle} type="video/webm" onError={this.onImgLoadFailed} data-cid={link.c_id} onLoadedMetadata={this.onImgLoad} autoPlay="true" loop="loop"/>
+            <video src={newURL} style={imgStyle} type="video/mp4" onError={this.onImgLoadFailed} data-cid={link.c_id} onLoadedMetadata={this.onImgLoad} autoPlay="true" loop="loop"/>
             <div className="imgOverlay"><ClipboardButton onSuccess={this.handleCopyUrl} data-clipboard-text={link.url} className="copyUrl">Copy Url</ClipboardButton></div>
           </div>
         );
@@ -292,7 +295,13 @@ class App extends Component {
         <div id="TopBar">
           <Search search={this.search} searchText={this.searchText} clearLinks={this.clearLinks}/>
         </div>    
-        <Masonry className={"linkDiv"} options={{fitWidth: true, itemSelector: '.linkDivChild', gutter: 0, transitionDuration: '0.8s'}}>
+        <Masonry
+          ref={function(c) {this.masonry = this.masonry || c.masonry;}.bind(this)}
+          className={"linkDiv"} 
+          options={{fitWidth: true, itemSelector: '.linkDivChild', gutter: 0, transitionDuration: '0.8s'}}
+          onImagesLoaded={this.handleImagesLoaded}
+          onLayoutComplete={laidOutItems => this.handleLayoutComplete(laidOutItems)}
+        >
           {linkRows}
         </Masonry>
         <div className="flex three">
