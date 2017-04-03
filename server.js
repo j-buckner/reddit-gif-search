@@ -173,7 +173,7 @@ io.on('connection', function(socket){
   });
 
   socket.on('search-db', function(searchDBData){
-    db.any(`SELECT * FROM links WHERE id>$1 AND size < 2000000 ORDER BY score DESC`, [searchDBData.after])
+    db.any(`SELECT * FROM links WHERE id > $1 AND size < 2000000 ORDER BY score DESC`, [searchDBData.after])
       .then(data => {
         socket.emit('search-response-db', data);
       })

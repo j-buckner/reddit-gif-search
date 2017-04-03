@@ -4,6 +4,7 @@ import Search from './components/Search.jsx';
 import '../node_modules/react-resizable/css/styles.css';
 import '../node_modules/react-grid-layout/css/styles.css';
 import Masonry from 'react-masonry-component';
+import ReactDOM from 'react-dom';
 
 var ClipboardButton = require('react-clipboard.js');
 
@@ -31,7 +32,7 @@ class App extends Component {
     this.onImgLoadFailed = this.onImgLoadFailed.bind(this);
     this.onImgLoad = this.onImgLoad.bind(this);
     this.componentDidMount = this.componentDidMount.bind(this);
-    this.handleLayoutComplete = this.handleLayoutComplete.bind(this);
+    this.handleImagesLoaded = this.handleImagesLoaded.bind(this);
   }
 
   clearLinks() {
@@ -43,9 +44,13 @@ class App extends Component {
     if (links.length === 0) return;
 
     for (var i = links.length; i < links.length + 10; i++) {
-
+      
       // eslint-disable-next-line
-      if (links.findIndex((link) => { return link.id === linkCache[i].id; }) !== -1) return;
+      if (links.findIndex((link) => {
+        // todo next - figure this out
+        console.log(link, linkCache[i]);
+        return link.id === linkCache[i].id; 
+      }) !== -1) continue;
 
       links.push(linkCache[i]);
     }
@@ -61,15 +66,17 @@ class App extends Component {
   handleSearchDBResponse(newLinks) {
     const { links } = this.state;
 
-    
+    let numTargetColumns = Math.ceil(document.body.clientWidth / 430);
+    let numTargetRows = Math.ceil(document.body.clientHeight / 280); // assume 280px average link height
+
+    let numLinksToLoad = numTargetColumns * numTargetRows;
+
     newLinks.forEach((newLink) => {
-      
-        document.getElementById('loadingText').style.display = 'none';
 
         // Don't let duplicates through
         if (links.findIndex((link) => { return link.url === newLink.url; }) !== -1) return;
 
-        if (links.length > 12) return;
+        if (links.length > numLinksToLoad) return;
 
         links.push(newLink);
     });
@@ -126,8 +133,6 @@ class App extends Component {
       this.search(searchText, searchTime, newAfter);
       return;
     }
-
-    // document.body.scrollHeight <= document.body.clientHeight
 
     this.setState({nextAfter: newAfter});
   }
@@ -206,6 +211,7 @@ class App extends Component {
       event.target.width = targetWidth;
       event.target.height = targetHeight;
     }
+
   }
 
   handleCopyUrl(e) {
@@ -225,15 +231,10 @@ class App extends Component {
   }
 
   handleImagesLoaded(mediaLoaded) {
-    
-  }
-
-  handleLayoutComplete(laidOutItems) {
-    if (laidOutItems.length === 0) return;
-  }
-
-  handleRemoveComplete(removedItems) {
-    
+    if (mediaLoaded.images.length === 0) return;
+   
+    document.getElementById('loadingText').style.display = 'none';
+    ReactDOM.findDOMNode(this.refs.masonryDiv).style.display = '';
   }
 
   componentDidMount() {
@@ -242,7 +243,8 @@ class App extends Component {
     document.addEventListener("scroll", function(event) {
       if ( Math.round(this.getDocHeight() - 450) <= this.getScrollXY()[1] + window.innerHeight) {
         this.search(searchText, searchTime, nextAfter);
-        this.getLinksFromCache();
+        // TODO: figure out how to handle this multi-threading
+        // this.getLinksFromCache();
       }
     }.bind(this));
 
@@ -255,7 +257,7 @@ class App extends Component {
 
   render() {
     const { links } = this.state;
-    console.log('rendering');
+
     const imgStyle = {
       'marginBottom': '-5px',
       'display': 'block'
@@ -287,8 +289,12 @@ class App extends Component {
     }.bind(this));
 
     const loadingStyle = {
-      'display': 'none'
+      'display': ''
     };
+
+    const masonryDivStyle = {
+      'display': 'none'
+    }
 
     return (
       <div id="AppWrapper" className="App">
@@ -296,11 +302,11 @@ class App extends Component {
           <Search search={this.search} searchText={this.searchText} clearLinks={this.clearLinks}/>
         </div>    
         <Masonry
-          ref={function(c) {this.masonry = this.masonry || c.masonry;}.bind(this)}
-          className={"linkDiv"} 
+          ref={"masonryDiv"}
+          className={"linkDiv"}
+          style={masonryDivStyle}
           options={{fitWidth: true, itemSelector: '.linkDivChild', gutter: 0, transitionDuration: '0.8s'}}
           onImagesLoaded={this.handleImagesLoaded}
-          onLayoutComplete={laidOutItems => this.handleLayoutComplete(laidOutItems)}
         >
           {linkRows}
         </Masonry>
