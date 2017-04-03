@@ -23,7 +23,8 @@
     "randomstring": "^1.1.5",
     "remote-file-size": "^3.0.3",
     "socket.io": "^1.7.2",
-    "socket.io-client": "^1.7.2"
+    "socket.io-client": "^1.7.2",
+    "underscore": "^1.8.3"
   },
   "scripts": {
     "start": "concurrently \"npm run server\" \"npm run client\"",

@@ -8,6 +8,8 @@ import ReactDOM from 'react-dom';
 
 var ClipboardButton = require('react-clipboard.js');
 
+var _ = require('underscore');
+
 const io = require('socket.io-client');
 const socket = io.connect('/');
 
@@ -33,6 +35,7 @@ class App extends Component {
     this.onImgLoad = this.onImgLoad.bind(this);
     this.componentDidMount = this.componentDidMount.bind(this);
     this.handleImagesLoaded = this.handleImagesLoaded.bind(this);
+    this.getLinksFromCache = this.getLinksFromCache.bind(this);
   }
 
   clearLinks() {
@@ -41,21 +44,26 @@ class App extends Component {
 
   getLinksFromCache() {
     const { links, linkCache } = this.state;
+
     if (links.length === 0) return;
-
+    
+    let newLinks = _.toArray(links);
+    console.log(links.length, links.length + 10);
     for (var i = links.length; i < links.length + 10; i++) {
-      
       // eslint-disable-next-line
-      if (links.findIndex((link) => {
-        // todo next - figure this out
-        console.log(link, linkCache[i]);
-        return link.id === linkCache[i].id; 
-      }) !== -1) continue;
-
-      links.push(linkCache[i]);
+      // if (links.findIndex((link) => {
+      //   // todo next - figure this out
+      //   console.log(link, linkCache[i]);
+      //   return link.id === linkCache[i].id; 
+      // }) !== -1) continue;
+      // if (i > 30) return;
+      console.log(i, linkCache[i]);
+      newLinks.push(linkCache[i]);
     }
 
-    this.setState({links: links});
+    newLinks =  _.uniq(newLinks, 'url');
+
+    this.setState({links: newLinks});
   }
 
   searchDB() {
@@ -67,7 +75,7 @@ class App extends Component {
     const { links } = this.state;
 
     let numTargetColumns = Math.ceil(document.body.clientWidth / 430);
-    let numTargetRows = Math.ceil(document.body.clientHeight / 280); // assume 280px average link height
+    let numTargetRows = Math.ceil(document.body.clientHeight / 250); // assume 250px average link height
 
     let numLinksToLoad = numTargetColumns * numTargetRows;
 
@@ -240,11 +248,12 @@ class App extends Component {
   componentDidMount() {
     const { searchText, searchTime, nextAfter } = this.state;
 
+    var getLinksFromCache = _.throttle(this.getLinksFromCache, 1000);
+
     document.addEventListener("scroll", function(event) {
       if ( Math.round(this.getDocHeight() - 450) <= this.getScrollXY()[1] + window.innerHeight) {
         this.search(searchText, searchTime, nextAfter);
-        // TODO: figure out how to handle this multi-threading
-        // this.getLinksFromCache();
+        getLinksFromCache();
       }
     }.bind(this));
 
