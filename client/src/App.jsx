@@ -41,7 +41,6 @@ class App extends Component {
     if (links.length === 0) return;
     
     let newLinks = _.toArray(links);
-    console.log(links.length, links.length + 10);
     for (var i = links.length; i < links.length + 10; i++) {
       newLinks.push(linkCache[i]);
     }
