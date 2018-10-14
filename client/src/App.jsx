@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
-import './App.css';
 import Search from './components/Search.jsx';
-import '../node_modules/react-resizable/css/styles.css';
-import '../node_modules/react-grid-layout/css/styles.css';
 import Masonry from 'react-masonry-component';
 import ReactDOM from 'react-dom';
+
+import './App.css';
+import '../node_modules/react-resizable/css/styles.css';
+import '../node_modules/react-grid-layout/css/styles.css';
 
 var ClipboardButton = require('react-clipboard.js');
 
@@ -12,6 +13,7 @@ var _ = require('underscore');
 
 const io = require('socket.io-client');
 const socket = io.connect('/');
+const autoBind = require('auto-bind');
 
 class App extends Component {
   constructor(props) {
@@ -26,16 +28,7 @@ class App extends Component {
       searchTime: ''
     }
 
-    this.clearLinks = this.clearLinks.bind(this);
-    this.search = this.search.bind(this);
-    this.handleSearchResponse = this.handleSearchResponse.bind(this);
-    this.handleSearchResponseAfter = this.handleSearchResponseAfter.bind(this);
-    this.handleSearchDBResponse = this.handleSearchDBResponse.bind(this);
-    this.onImgLoadFailed = this.onImgLoadFailed.bind(this);
-    this.onImgLoad = this.onImgLoad.bind(this);
-    this.componentDidMount = this.componentDidMount.bind(this);
-    this.handleImagesLoaded = this.handleImagesLoaded.bind(this);
-    this.getLinksFromCache = this.getLinksFromCache.bind(this);
+    autoBind(this);
   }
 
   clearLinks() {
@@ -50,14 +43,6 @@ class App extends Component {
     let newLinks = _.toArray(links);
     console.log(links.length, links.length + 10);
     for (var i = links.length; i < links.length + 10; i++) {
-      // eslint-disable-next-line
-      // if (links.findIndex((link) => {
-      //   // todo next - figure this out
-      //   console.log(link, linkCache[i]);
-      //   return link.id === linkCache[i].id; 
-      // }) !== -1) continue;
-      // if (i > 30) return;
-      console.log(i, linkCache[i]);
       newLinks.push(linkCache[i]);
     }
 
@@ -92,23 +77,21 @@ class App extends Component {
     this.setState({linkCache: newLinks, links: links});
   }
 
-  search(newSearchText, newSearchTime, newAfter) {
-    return;
+  search(newSearchText, newSearchTime, newAfter) {    
+    const { searchText, searchTime, after, nextAfter } = this.state;
 
-    // const { searchText, searchTime, after, nextAfter } = this.state;
+    if (newAfter === '' && newSearchText === searchText && newSearchTime === searchTime) newAfter = nextAfter;
+    if (newAfter === after && after !== '') return;
 
-    // if (newAfter === '' && newSearchText === searchText && newSearchTime === searchTime) newAfter = nextAfter;
-    // if (newAfter === after && after !== '') return;
+    let searchData = {text: newSearchText, searchTime: newSearchTime, after: newAfter};
 
-    // let searchData = {text: newSearchText, searchTime: newSearchTime, after: newAfter};
+    socket.emit('search', searchData);
 
-    // socket.emit('search', searchData);
+    this.setState({after: newAfter});
+    this.setState({searchText: newSearchText});
+    this.setState({searchTime: newSearchTime});
 
-    // this.setState({after: newAfter});
-    // this.setState({searchText: newSearchText});
-    // this.setState({searchTime: newSearchTime});
-
-    // document.getElementById('loadingText').style.display = '';
+    document.getElementById('loadingText').style.display = '';
   }
 
   handleSearchResponse(newLinks) {
