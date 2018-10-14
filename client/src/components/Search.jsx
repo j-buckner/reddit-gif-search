@@ -71,11 +71,18 @@ class Search extends Component {
 
   componentDidMount() {
     document.getElementById('searchInput').focus();
+    // setTimeout(function() {
+    //   window.requestAnimationFrame(function() {
+    //     this.animateText(0);
+    //   }.bind(this));
+    // }.bind(this), 450);
+
+    let submitSearch = document.getElementById('submitSearch');
+    submitSearch.click();
+    submitSearch.focus();
     setTimeout(function() {
-      window.requestAnimationFrame(function() {
-        this.animateText(0);
-      }.bind(this));
-    }.bind(this), 450);
+      submitSearch.blur();
+    }, 1000);
 
     var searchInput = document.getElementById('searchInput');
     searchInput.addEventListener("keydown", function (e) {
